@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.colisa.podplay.network.Result
 import com.colisa.podplay.network.models.PodcastResponse
 import com.colisa.podplay.repository.RealItunesRepo
+import com.colisa.podplay.util.DateUtils
 import com.colisa.podplay.util.Event
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -70,7 +71,7 @@ class MainViewModel(
     private fun itunesPodcastToPodcastSummary(i: PodcastResponse.ItunesPodcast): PodcastSummary {
         return PodcastSummary(
             i.collectionName,
-            i.releaseDate,
+            DateUtils.jsonDateToShortDate(i.releaseDate),
             i.artworkUrl100,
             i.feedUrl
         )
