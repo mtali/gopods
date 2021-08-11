@@ -6,12 +6,24 @@ import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.colisa.podplay.R
 import com.colisa.podplay.databinding.FragmentMainBinding
+import com.colisa.podplay.extensions.hideKeyboard
+import com.colisa.podplay.extensions.setupSnackbar
+import com.colisa.podplay.ui.adapters.PodcastListAdapter
+import com.colisa.podplay.ui.viewmodels.MainViewModel
+import com.colisa.podplay.ui.viewmodels.factory.MainViewModelFactory
+import com.google.android.material.snackbar.Snackbar
 import timber.log.Timber
 
 class MainFragment : Fragment() {
     private lateinit var binding: FragmentMainBinding
+    private lateinit var searchView: SearchView
+    private val mainViewModel: MainViewModel by viewModels { MainViewModelFactory() }
+    private lateinit var podcastAdapter: PodcastListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +43,8 @@ class MainFragment : Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.fragment_main_menu, menu)
         val searchMenuItem = menu.findItem(R.id.action_search)
-        val searchView = searchMenuItem.actionView as SearchView
+        searchView = searchMenuItem.actionView as SearchView
+        setupSearchView()
         searchView.queryHint = getString(R.string.search)
         activity?.let {
             val searchManager = it.getSystemService(Context.SEARCH_SERVICE) as SearchManager
@@ -45,10 +58,65 @@ class MainFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_search -> {
-                Timber.d("Search pressed!")
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.lifecycleOwner = viewLifecycleOwner
+        binding.viewmodel = mainViewModel
+        setupSnackbar()
+        setupObservers()
+        setupListAdapter()
+
+    }
+
+    private fun setupListAdapter() {
+        val viewModel = binding.viewmodel
+        if (viewModel != null) {
+            val recycler = binding.podcastRecyclerView
+            val layoutManager = LinearLayoutManager(context)
+            val adapter = PodcastListAdapter(viewModel)
+            val divider = DividerItemDecoration(recycler.context, layoutManager.orientation)
+            recycler.apply {
+                this.adapter = adapter
+                this.layoutManager = layoutManager
+                this.addItemDecoration(divider)
+            }
+        } else {
+            Timber.w("ViewModel not initialized when attempting to set up adapter.")
+        }
+    }
+
+    private fun setupSnackbar() {
+        view?.setupSnackbar(viewLifecycleOwner, mainViewModel.snackbarText, Snackbar.LENGTH_SHORT)
+    }
+
+    private fun performSearch(term: String) {
+        mainViewModel.searchPodcasts(term)
+    }
+
+    private fun setupSearchView() {
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                query?.let {
+                    performSearch(it)
+                    view?.hideKeyboard()
+                }
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false
+            }
+        })
+    }
+
+    private fun setupObservers() {
+
+    }
+
 }
