@@ -1,5 +1,6 @@
 package com.colisa.podplay.ui.viewmodels
 
+import android.os.Parcelable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,9 +10,9 @@ import com.colisa.podplay.network.models.PodcastResponse
 import com.colisa.podplay.repository.RealItunesRepo
 import com.colisa.podplay.util.DateUtils
 import com.colisa.podplay.util.Event
+import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 class MainViewModel(
     private val itunesRepo: RealItunesRepo
@@ -26,6 +27,9 @@ class MainViewModel(
 
     private var _podcasts = MutableLiveData<List<PodcastSummary>>()
     var podcasts: LiveData<List<PodcastSummary>> = _podcasts
+
+    private var _openPodcastDetailEvent = MutableLiveData<Event<PodcastSummary>>()
+    var openPodcastDetailEvent: LiveData<Event<PodcastSummary>> = _openPodcastDetailEvent
 
     fun searchPodcasts(term: String) {
         if (query == term || dataLoading.value == true) {
@@ -64,7 +68,7 @@ class MainViewModel(
     }
 
     fun openPodcast(podcast: PodcastSummary) {
-        Timber.d("Open $podcast")
+        _openPodcastDetailEvent.value = Event(podcast)
     }
 
 
@@ -77,11 +81,12 @@ class MainViewModel(
         )
     }
 
+    @Parcelize
     data class PodcastSummary(
         var name: String? = "",
         var lastUpdated: String = "",
         var imageUrl: String? = "",
         var feedUrl: String? = ""
-    )
+    ) : Parcelable
 
 }

@@ -7,6 +7,7 @@ import android.view.*
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.colisa.podplay.R
@@ -16,6 +17,7 @@ import com.colisa.podplay.extensions.setupSnackbar
 import com.colisa.podplay.ui.adapters.PodcastListAdapter
 import com.colisa.podplay.ui.viewmodels.MainViewModel
 import com.colisa.podplay.ui.viewmodels.factory.MainViewModelFactory
+import com.colisa.podplay.util.EventObserver
 import com.google.android.material.snackbar.Snackbar
 import timber.log.Timber
 
@@ -69,7 +71,7 @@ class MainFragment : Fragment() {
         binding.lifecycleOwner = viewLifecycleOwner
         binding.viewmodel = mainViewModel
         setupSnackbar()
-        setupObservers()
+        setupNavigation()
         setupListAdapter()
 
     }
@@ -115,8 +117,15 @@ class MainFragment : Fragment() {
         })
     }
 
-    private fun setupObservers() {
+    private fun setupNavigation() {
+        mainViewModel.openPodcastDetailEvent.observe(viewLifecycleOwner, EventObserver {
+            openPodcastDetails(it)
+        })
+    }
 
+    private fun openPodcastDetails(podcast: MainViewModel.PodcastSummary) {
+        val action = MainFragmentDirections.actionMainFragmentToPodcastDetailFragment(podcast)
+        findNavController().navigate(action)
     }
 
 }
