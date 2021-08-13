@@ -13,6 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PodPlay"
+        android:usesCleartextTraffic="true"
         tools:ignore="AllowBackup">
         <activity
             android:name=".ui.activities.MainActivity"

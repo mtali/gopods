@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="com.colisa.podplay.util.HtmlUtils" />
+
+        <import type="com.colisa.podplay.util.DateUtils" />
+
+        <variable
+            name="viewmodel"
+            type="com.colisa.podplay.ui.viewmodels.PodcastDetailViewModel" />
+
+        <variable
+            name="episode"
+            type="com.colisa.podplay.ui.viewmodels.PodcastDetailViewModel.EpisodeOnView" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/titleView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginEnd="0dp"
+            android:text="@{HtmlUtils.INSTANCE.htmlToSpannable(episode.title)}"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_chainStyle="spread"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Title" />
+
+        <TextView
+            android:id="@+id/releaseDateView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginTop="8dp"
+            android:text="@{DateUtils.INSTANCE.dateToShortDate(episode.releaseDate)}"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/titleView"
+            tools:text="01/01/18" />
+
+        <TextView
+            android:id="@+id/durationView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginTop="8dp"
+            android:text="@{episode.duration}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/titleView"
+            tools:text="00:00" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

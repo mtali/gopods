@@ -16,7 +16,7 @@ import com.colisa.podplay.extensions.hideKeyboard
 import com.colisa.podplay.extensions.setupSnackbar
 import com.colisa.podplay.ui.adapters.PodcastListAdapter
 import com.colisa.podplay.ui.viewmodels.MainViewModel
-import com.colisa.podplay.ui.viewmodels.factory.MainViewModelFactory
+import com.colisa.podplay.ui.viewmodels.factory.ViewModelFactory
 import com.colisa.podplay.util.EventObserver
 import com.google.android.material.snackbar.Snackbar
 import timber.log.Timber
@@ -24,7 +24,7 @@ import timber.log.Timber
 class MainFragment : Fragment() {
     private lateinit var binding: FragmentMainBinding
     private lateinit var searchView: SearchView
-    private val mainViewModel: MainViewModel by viewModels { MainViewModelFactory() }
+    private val mainViewModel: MainViewModel by viewModels { ViewModelFactory() }
     private lateinit var podcastAdapter: PodcastListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
