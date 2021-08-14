@@ -22,6 +22,19 @@
         <argument
             android:name="podcast"
             app:argType="com.colisa.podplay.ui.viewmodels.MainViewModel$PodcastSummary" />
+        <action
+            android:id="@+id/action_podcastDetailFragment_to_episodePlayerFragment"
+            app:destination="@id/episodePlayerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/episodePlayerFragment"
+        android:name="com.colisa.podplay.ui.fragments.EpisodePlayerFragment"
+        android:label="@string/episode"
+        tools:layout="@layout/fragment_episode_player">
+        <argument
+            android:name="episode"
+            app:argType="com.colisa.podplay.ui.viewmodels.PodcastViewModel$EpisodeOnView" />
     </fragment>
 
 </navigation>

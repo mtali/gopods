@@ -11,7 +11,7 @@
 
         <variable
             name="viewmodel"
-            type="com.colisa.podplay.ui.viewmodels.PodcastDetailViewModel" />
+            type="com.colisa.podplay.ui.viewmodels.PodcastViewModel" />
     </data>
 
 
@@ -68,7 +68,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/subscribe"
                         android:textColor="#757575"
-                        app:cornerRadius="10dp"
+                        android:textAllCaps="false"
+                        app:cornerRadius="24dp"
                         app:icon="@drawable/ic_baseline_add_24"
                         app:iconTint="@color/white"
                         app:layout_constraintStart_toStartOf="parent"

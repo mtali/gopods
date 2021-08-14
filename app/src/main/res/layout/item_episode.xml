@@ -11,11 +11,11 @@
 
         <variable
             name="viewmodel"
-            type="com.colisa.podplay.ui.viewmodels.PodcastDetailViewModel" />
+            type="com.colisa.podplay.ui.viewmodels.PodcastViewModel" />
 
         <variable
             name="episode"
-            type="com.colisa.podplay.ui.viewmodels.PodcastDetailViewModel.EpisodeOnView" />
+            type="com.colisa.podplay.ui.viewmodels.PodcastViewModel.EpisodeOnView" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -23,6 +23,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:onClick="@{() -> viewmodel.openEpisode(episode)}"
         android:layout_marginBottom="8dp">
 
         <TextView

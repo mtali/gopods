@@ -5,7 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,15 +14,21 @@ import com.colisa.podplay.databinding.FragmentPodcastDetailsBinding
 import com.colisa.podplay.extensions.setupSnackbar
 import com.colisa.podplay.ui.adapters.EpisodeListAdapter
 import com.colisa.podplay.ui.viewmodels.MainViewModel
-import com.colisa.podplay.ui.viewmodels.PodcastDetailViewModel
+import com.colisa.podplay.ui.viewmodels.PodcastViewModel
 import com.colisa.podplay.ui.viewmodels.factory.ViewModelFactory
+import com.colisa.podplay.util.EventObserver
 import com.google.android.material.snackbar.Snackbar
 import timber.log.Timber
 
 class PodcastDetailFragment : Fragment() {
     private lateinit var binding: FragmentPodcastDetailsBinding
     private val args: PodcastDetailFragmentArgs by navArgs()
-    private val podcastsViewModel: PodcastDetailViewModel by viewModels { ViewModelFactory() }
+    private val podcastsViewModel: PodcastViewModel by activityViewModels { ViewModelFactory() }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,15 +43,15 @@ class PodcastDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val podcast = args.podcast as MainViewModel.PodcastSummary
-        podcastsViewModel.setCurrentPodcast(podcast)
         setupSnackbar()
         loadPodcast()
         setupListAdapter()
+        setupNavigation()
     }
 
     private fun loadPodcast() {
-        podcastsViewModel.loadPodcasts()
+        val podcast = args.podcast as MainViewModel.PodcastSummary
+        podcastsViewModel.setCurrentPodcast(podcast)
     }
 
 
@@ -71,6 +78,20 @@ class PodcastDetailFragment : Fragment() {
         } else {
             Timber.w("ViewModel[PodcastDetailViewModel] not initialized when attempting to set up adapter.")
         }
+    }
+
+    private fun setupNavigation() {
+        podcastsViewModel.openEpisodeEvent.observe(viewLifecycleOwner, EventObserver {
+            openEpisodePlayerFragment(it)
+        })
+    }
+
+    private fun openEpisodePlayerFragment(episode: PodcastViewModel.EpisodeOnView) {
+        val action =
+            PodcastDetailFragmentDirections.actionPodcastDetailFragmentToEpisodePlayerFragment(
+                episode
+            )
+        findNavController().navigate(action)
     }
 
 }

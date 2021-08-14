@@ -1,5 +1,6 @@
 package com.colisa.podplay.ui.viewmodels
 
+import android.os.Parcelable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,16 +10,18 @@ import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.network.Result
 import com.colisa.podplay.repository.PodcastRepo
 import com.colisa.podplay.util.Event
+import com.colisa.podplay.util.HtmlUtils
+import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.*
 
-class PodcastDetailViewModel(
+class PodcastViewModel(
     private val repo: PodcastRepo
 ) : ViewModel() {
 
-    private lateinit var podcastSummary: MainViewModel.PodcastSummary
+    private var podcastSummary: MainViewModel.PodcastSummary? = null
 
     private val _dataLoading = MutableLiveData<Boolean>()
     val dataLoading: LiveData<Boolean> = _dataLoading
@@ -26,23 +29,29 @@ class PodcastDetailViewModel(
     private val _snackbarText = MutableLiveData<Event<String>>()
     val snackbarText: LiveData<Event<String>> = _snackbarText
 
-    private val _activePodcast = MutableLiveData<PodcastOnView>()
-    val activePodcast: LiveData<PodcastOnView> = _activePodcast
+//    private val _activePodcast = MutableLiveData<PodcastOnView>()
+//    val activePodcast: LiveData<PodcastOnView> = _activePodcast
+
+    private val _openEpisodeEvent = MutableLiveData<Event<EpisodeOnView>>()
+    val openEpisodeEvent: LiveData<Event<EpisodeOnView>> = _openEpisodeEvent
 
 
-    private val _podcast = MutableLiveData<PodcastOnView>()
-    val podcast: LiveData<PodcastOnView> = _podcast
+    private val _podcast = MutableLiveData<PodcastOnView?>()
+    val podcast: LiveData<PodcastOnView?> = _podcast
 
     fun setCurrentPodcast(podcast: MainViewModel.PodcastSummary) {
-        podcastSummary = podcast
-        loadPodcasts()
+        if (podcastSummary != null && podcast == podcastSummary) {
+            return
+        } else {
+            podcastSummary = podcast
+            loadPodcasts()
+        }
     }
 
-    fun loadPodcasts() {
+    private fun loadPodcasts() {
         if (_dataLoading.value == true) return
-        if (this::podcastSummary.isInitialized) {
-            val feedUrl = podcastSummary.feedUrl
-            feedUrl?.let { url ->
+        podcastSummary?.let { summary ->
+            summary.feedUrl?.let { url ->
                 viewModelScope.launch {
                     repo.getFeed(url)
                         .collect {
@@ -60,10 +69,12 @@ class PodcastDetailViewModel(
                         }
                 }
             }
-
-        } else {
-            Timber.w("Failed to podcast when podcast summary not initialized")
+            return@let
         }
+
+        if (podcastSummary == null)
+            Timber.w("Failed to load podcast when podcast summary not initialized")
+
     }
 
     fun refresh() {
@@ -73,9 +84,8 @@ class PodcastDetailViewModel(
     private fun handleSuccessRssFeed(p: Result.Success<Podcast?>) {
         viewModelScope.launch {
             p.data?.let {
-                it.imageUrl = podcastSummary.imageUrl ?: ""
+                it.imageUrl = podcastSummary?.imageUrl ?: ""
                 _podcast.value = podcastToPodcastOnView(it)
-                Timber.d("Loaded: $it")
             }
         }
     }
@@ -85,8 +95,8 @@ class PodcastDetailViewModel(
         return episodes.map {
             EpisodeOnView(
                 it.guid,
-                it.title,
-                it.description,
+                HtmlUtils.htmlToSpannable(it.title).toString(),
+                HtmlUtils.htmlToSpannable(it.description).toString(),
                 it.mediaUrl,
                 it.releaseDate,
                 it.duration
@@ -97,12 +107,16 @@ class PodcastDetailViewModel(
     private fun podcastToPodcastOnView(it: Podcast): PodcastOnView {
         return PodcastOnView(
             false,
-            it.feedTitle,
+            HtmlUtils.htmlToSpannable(it.feedTitle).toString(),
             it.feedUrl,
-            it.feedDescription,
+            HtmlUtils.htmlToSpannable(it.feedDescription).toString(),
             it.imageUrl,
             episodeToEpisodeOnView(it.episodes)
         )
+    }
+
+    fun openEpisode(episode: EpisodeOnView) {
+        _openEpisodeEvent.value = Event(episode)
     }
 
     data class PodcastOnView(
@@ -114,6 +128,7 @@ class PodcastDetailViewModel(
         var episodes: List<EpisodeOnView>
     )
 
+    @Parcelize
     data class EpisodeOnView(
         var guid: String? = "",
         var title: String? = "",
@@ -121,5 +136,12 @@ class PodcastDetailViewModel(
         var mediaUrl: String? = "",
         var releaseDate: Date? = null,
         var duration: String? = ""
-    )
+    ) : Parcelable
+
+    fun cleanPodcastData() {
+        viewModelScope.launch {
+            podcastSummary = null
+            _podcast.value = null
+        }
+    }
 }

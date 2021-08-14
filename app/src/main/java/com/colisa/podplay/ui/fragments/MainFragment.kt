@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -16,6 +17,7 @@ import com.colisa.podplay.extensions.hideKeyboard
 import com.colisa.podplay.extensions.setupSnackbar
 import com.colisa.podplay.ui.adapters.PodcastListAdapter
 import com.colisa.podplay.ui.viewmodels.MainViewModel
+import com.colisa.podplay.ui.viewmodels.PodcastViewModel
 import com.colisa.podplay.ui.viewmodels.factory.ViewModelFactory
 import com.colisa.podplay.util.EventObserver
 import com.google.android.material.snackbar.Snackbar
@@ -24,8 +26,10 @@ import timber.log.Timber
 class MainFragment : Fragment() {
     private lateinit var binding: FragmentMainBinding
     private lateinit var searchView: SearchView
+    private val podcastsViewModel: PodcastViewModel by activityViewModels { ViewModelFactory() }
     private val mainViewModel: MainViewModel by viewModels { ViewModelFactory() }
     private lateinit var podcastAdapter: PodcastListAdapter
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +43,11 @@ class MainFragment : Fragment() {
     ): View {
         binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        podcastsViewModel.cleanPodcastData()
     }
 
 
@@ -80,6 +89,7 @@ class MainFragment : Fragment() {
         val viewModel = binding.viewmodel
         if (viewModel != null) {
             val recycler = binding.podcastRecyclerView
+            recycler.setHasFixedSize(true)
             val layoutManager = LinearLayoutManager(context)
             val adapter = PodcastListAdapter(viewModel)
             val divider = DividerItemDecoration(recycler.context, layoutManager.orientation)

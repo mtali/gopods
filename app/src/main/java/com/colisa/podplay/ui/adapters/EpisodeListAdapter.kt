@@ -6,10 +6,10 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.colisa.podplay.databinding.ItemEpisodeBinding
-import com.colisa.podplay.ui.viewmodels.PodcastDetailViewModel
+import com.colisa.podplay.ui.viewmodels.PodcastViewModel
 
-class EpisodeListAdapter(private val viewmodel: PodcastDetailViewModel) :
-    ListAdapter<PodcastDetailViewModel.EpisodeOnView, EpisodeListAdapter.ViewHolder>(
+class EpisodeListAdapter(private val viewmodel: PodcastViewModel) :
+    ListAdapter<PodcastViewModel.EpisodeOnView, EpisodeListAdapter.ViewHolder>(
         EpisodeDiffCallback()
     ) {
 
@@ -24,7 +24,7 @@ class EpisodeListAdapter(private val viewmodel: PodcastDetailViewModel) :
 
     class ViewHolder private constructor(private val binding: ItemEpisodeBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        fun bind(viewmodel: PodcastDetailViewModel, item: PodcastDetailViewModel.EpisodeOnView) {
+        fun bind(viewmodel: PodcastViewModel, item: PodcastViewModel.EpisodeOnView) {
             binding.viewmodel = viewmodel
             binding.episode = item
             binding.executePendingBindings()
@@ -40,17 +40,17 @@ class EpisodeListAdapter(private val viewmodel: PodcastDetailViewModel) :
     }
 }
 
-class EpisodeDiffCallback : DiffUtil.ItemCallback<PodcastDetailViewModel.EpisodeOnView>() {
+class EpisodeDiffCallback : DiffUtil.ItemCallback<PodcastViewModel.EpisodeOnView>() {
     override fun areItemsTheSame(
-        oldItem: PodcastDetailViewModel.EpisodeOnView,
-        newItem: PodcastDetailViewModel.EpisodeOnView
+        oldItem: PodcastViewModel.EpisodeOnView,
+        newItem: PodcastViewModel.EpisodeOnView
     ): Boolean {
         return oldItem.guid == newItem.guid
     }
 
     override fun areContentsTheSame(
-        oldItem: PodcastDetailViewModel.EpisodeOnView,
-        newItem: PodcastDetailViewModel.EpisodeOnView
+        oldItem: PodcastViewModel.EpisodeOnView,
+        newItem: PodcastViewModel.EpisodeOnView
     ): Boolean {
         return oldItem == newItem
     }
