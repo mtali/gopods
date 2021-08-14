@@ -56,6 +56,7 @@ dependencies {
     def lifecycle_version = "2.4.0-alpha03"
     def glide_version = "4.12.0"
     def swipe_refresh_version = "1.1.0"
+    def support_lib_version = "28.0.0"
 
     implementation "androidx.core:core-ktx:$core_version"
     implementation "androidx.appcompat:appcompat:$compat_version"
@@ -72,7 +73,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
     implementation "com.github.bumptech.glide:glide:$glide_version"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:$swipe_refresh_version"
-
+    implementation "com.android.support:support-media-compat:$support_lib_version"
 
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$junit_ext_version"

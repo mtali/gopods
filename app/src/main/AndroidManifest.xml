@@ -14,7 +14,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PodPlay"
         android:usesCleartextTraffic="true"
-        tools:ignore="AllowBackup">
+        tools:ignore="AllowBackup"
+        tools:targetApi="m">
         <activity
             android:name=".ui.activities.MainActivity"
             android:exported="true">
@@ -24,6 +25,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".playback.PodplayMediaService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
