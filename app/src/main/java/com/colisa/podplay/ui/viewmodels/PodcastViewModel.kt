@@ -35,9 +35,17 @@ class PodcastViewModel(
     private val _openEpisodeEvent = MutableLiveData<Event<EpisodeOnView>>()
     val openEpisodeEvent: LiveData<Event<EpisodeOnView>> = _openEpisodeEvent
 
+    private val _currentEpisode = MutableLiveData<EpisodeOnView?>()
+    val currentEpisode: LiveData<EpisodeOnView?> = _currentEpisode
 
     private val _podcast = MutableLiveData<PodcastOnView?>()
     val podcast: LiveData<PodcastOnView?> = _podcast
+
+    private val _playOrPauseEpisodeEvent = MutableLiveData<Event<EpisodeOnView>>()
+    val playOrPauseEpisodeEvent: LiveData<Event<EpisodeOnView>> = _playOrPauseEpisodeEvent
+
+    private val _playbackState = MutableLiveData<Int>()
+    val playbackState: LiveData<Int> = _playbackState
 
     fun setCurrentPodcast(podcast: MainViewModel.PodcastSummary) {
         if (podcastSummary != null && podcast == podcastSummary) {
@@ -46,6 +54,10 @@ class PodcastViewModel(
             podcastSummary = podcast
             loadPodcasts()
         }
+    }
+
+    fun setPlayState(state: Int) {
+        _playbackState.value = state
     }
 
     private fun loadPodcasts() {
@@ -117,6 +129,18 @@ class PodcastViewModel(
 
     fun openEpisode(episode: EpisodeOnView) {
         _openEpisodeEvent.value = Event(episode)
+        updateCurrentEpisode(episode)
+
+    }
+
+    private fun updateCurrentEpisode(episode: EpisodeOnView) {
+        _currentEpisode.value = episode
+    }
+
+    fun playOrPauseEpisode() {
+        _currentEpisode.value?.let {
+            _playOrPauseEpisodeEvent.value = Event(it)
+        }
     }
 
     data class PodcastOnView(

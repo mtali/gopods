@@ -28,7 +28,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        return super.onSupportNavigateUp()
-                || findNavController(R.id.main_nav_host).navigateUp()
+        return findNavController(R.id.main_nav_host).navigateUp() || super.onSupportNavigateUp()
     }
 }

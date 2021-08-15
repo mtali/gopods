@@ -1,6 +1,7 @@
 package com.colisa.podplay.ui.fragments
 
 import android.content.ComponentName
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
@@ -17,7 +18,9 @@ import com.colisa.podplay.databinding.FragmentEpisodePlayerBinding
 import com.colisa.podplay.extensions.requireMediaController
 import com.colisa.podplay.playback.PodplayMediaService
 import com.colisa.podplay.ui.viewmodels.PodcastViewModel
+import com.colisa.podplay.ui.viewmodels.PodcastViewModel.EpisodeOnView
 import com.colisa.podplay.ui.viewmodels.factory.ViewModelFactory
+import com.colisa.podplay.util.EventObserver
 import timber.log.Timber
 
 class EpisodePlayerFragment : Fragment() {
@@ -39,28 +42,40 @@ class EpisodePlayerFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentEpisodePlayerBinding.inflate(inflater, container, false)
-        binding.viewmodel = podcastsViewModel
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupView()
+        binding.apply {
+            lifecycleOwner = viewLifecycleOwner
+            viewmodel = podcastsViewModel
+        }
+        setEventsObservers()
     }
 
-    private fun setupView() {
-        val episode = args.episode as PodcastViewModel.EpisodeOnView
-        binding.episodeTitleTextview.text = episode.title
-        binding.episodeDescriptionTextView.text = episode.description
+
+    private fun setEventsObservers() {
+        Timber.d("PlayPause event!")
+        podcastsViewModel.playOrPauseEpisodeEvent.observe(viewLifecycleOwner, EventObserver {
+            onClickEpisodePlayOrPause(it)
+        })
+    }
+
+    private fun startPlaying(episode: EpisodeOnView) {
+        val controller = requireMediaController()!!
+        controller.transportControls.playFromUri(Uri.parse(episode.mediaUrl), null)
     }
 
     private fun registerMediaController(token: MediaSessionCompat.Token) {
-        val mediaController = MediaControllerCompat(requireActivity(), token)
-        MediaControllerCompat.setMediaController(requireActivity(), mediaController)
+        Timber.d("MediaController callback registered")
+        val controller = MediaControllerCompat(requireActivity(), token)
+        MediaControllerCompat.setMediaController(
+            requireActivity(),
+            controller
+        )
         mediaControllerCallback = MediaControllerCallback()
-        mediaControllerCallback?.let {
-            mediaController.registerCallback(it)
-        }
+        controller.registerCallback(mediaControllerCallback!!)
     }
 
     private fun initMediaBrowser() {
@@ -70,6 +85,19 @@ class EpisodePlayerFragment : Fragment() {
             MediaBrowserCallback(),
             null
         )
+    }
+
+    private fun onClickEpisodePlayOrPause(episode: EpisodeOnView) {
+        val controller = requireMediaController()!!
+        if (controller.playbackState != null) {
+            if (controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
+                controller.transportControls.pause()
+            } else {
+                startPlaying(episode)
+            }
+        } else {
+            startPlaying(episode)
+        }
     }
 
     override fun onStart() {
@@ -85,8 +113,9 @@ class EpisodePlayerFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        if (requireMediaController() == null) {
+        if (requireMediaController() != null) {
             mediaControllerCallback?.let {
+                Timber.d("MediaController callback unregistered")
                 requireMediaController()?.unregisterCallback(it)
             }
         }
@@ -100,7 +129,11 @@ class EpisodePlayerFragment : Fragment() {
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
-            Timber.d("State changed to $state")
+            Timber.d("State changed to: $state")
+            state?.let {
+                podcastsViewModel.setPlayState(it.state)
+            }
+
         }
     }
 
