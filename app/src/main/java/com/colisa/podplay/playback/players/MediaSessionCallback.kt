@@ -17,7 +17,8 @@ import timber.log.Timber
 class MediaSessionCallback(
     private val context: Context,
     private val mediaSession: MediaSessionCompat,
-    private var mediaPlayer: MediaPlayer? = null
+    private var mediaPlayer: MediaPlayer? = null,
+    private val listener: PodplayMediaSessionListener? = null
 ) : MediaSessionCompat.Callback() {
 
     private var focusRequest: AudioFocusRequest? = null
@@ -76,15 +77,22 @@ class MediaSessionCallback(
             .setState(state, position, 1.0f)
             .build()
         mediaSession.setPlaybackState(playbackState)
+        if (state == PlaybackStateCompat.STATE_PAUSED ||
+            state == PlaybackStateCompat.STATE_PLAYING
+        ) {
+            listener?.onStateChanged()
+        }
     }
 
     private fun setNewMedia(uri: Uri?) {
+        Timber.d("Setting new media")
         newMedia = true
         mediaUri = uri
     }
 
     private fun initializeMediaPlayer() {
         if (mediaPlayer == null) {
+            Timber.d("Media player initialized")
             mediaPlayer = MediaPlayer()
             mediaPlayer!!.setOnCompletionListener {
                 setState(PlaybackStateCompat.STATE_PAUSED)
@@ -97,14 +105,31 @@ class MediaSessionCallback(
             newMedia = false
             mediaPlayer?.let { player ->
                 mediaUri?.let { uri ->
+                    Timber.d("Media player reset() prepare() and setDataSource()")
                     player.reset()
+
                     player.setDataSource(context, uri)
                     player.prepare()
-                    mediaSession.setMetadata(
-                        MediaMetadataCompat.Builder()
-                            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, uri.toString())
-                            .build()
-                    )
+                    mediaExtras?.let { mediaExtras ->
+                        mediaSession.setMetadata(
+                            MediaMetadataCompat.Builder()
+                                .putString(
+                                    MediaMetadataCompat.METADATA_KEY_TITLE,
+                                    mediaExtras.getString(MediaMetadataCompat.METADATA_KEY_TITLE)
+                                )
+                                .putString(
+                                    MediaMetadataCompat.METADATA_KEY_ARTIST,
+                                    mediaExtras.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)
+                                )
+                                .putString(
+                                    MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI,
+                                    mediaExtras.getString(
+                                        MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI
+                                    )
+                                )
+                                .build()
+                        )
+                    }
                 }
             }
         }
@@ -127,6 +152,7 @@ class MediaSessionCallback(
                 setState(PlaybackStateCompat.STATE_PAUSED)
             }
         }
+        listener?.onPausePlaying()
     }
 
     private fun stopPlaying() {
@@ -137,6 +163,7 @@ class MediaSessionCallback(
                 setState(PlaybackStateCompat.STATE_STOPPED)
             }
         }
+        listener?.onStopPlaying()
     }
 
     private fun ensureAudioFocus(): Boolean {
@@ -173,6 +200,12 @@ class MediaSessionCallback(
         } else {
             audionManager.abandonAudioFocus(null)
         }
+    }
+
+    interface PodplayMediaSessionListener {
+        fun onStateChanged()
+        fun onStopPlaying()
+        fun onPausePlaying()
     }
 
 

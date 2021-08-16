@@ -38,7 +38,7 @@ fun setEpisodes(view: RecyclerView, items: List<PodcastViewModel.EpisodeOnView>?
 
 @BindingAdapter("app:playState")
 fun setPlayState(view: ImageView, state: Int?) {
-    Timber.d("State playing: ${state == STATE_PLAYING}")
+    Timber.d("Change drawable for play/pause toggle: $state")
     if (state == STATE_PLAYING) {
         view.setImageResource(R.drawable.ic_outline_pause_24)
     } else {

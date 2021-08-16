@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import com.colisa.podplay.databinding.FragmentEpisodePlayerBinding
 import com.colisa.podplay.extensions.requireMediaController
@@ -21,6 +22,7 @@ import com.colisa.podplay.ui.viewmodels.PodcastViewModel
 import com.colisa.podplay.ui.viewmodels.PodcastViewModel.EpisodeOnView
 import com.colisa.podplay.ui.viewmodels.factory.ViewModelFactory
 import com.colisa.podplay.util.EventObserver
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class EpisodePlayerFragment : Fragment() {
@@ -56,15 +58,24 @@ class EpisodePlayerFragment : Fragment() {
 
 
     private fun setEventsObservers() {
-        Timber.d("PlayPause event!")
         podcastsViewModel.playOrPauseEpisodeEvent.observe(viewLifecycleOwner, EventObserver {
             onClickEpisodePlayOrPause(it)
         })
     }
 
     private fun startPlaying(episode: EpisodeOnView) {
-        val controller = requireMediaController()!!
-        controller.transportControls.playFromUri(Uri.parse(episode.mediaUrl), null)
+        lifecycleScope.launch {
+            val controller = requireMediaController()!!
+            val viewData = podcastsViewModel.podcast.value
+            viewData?.let { _viewData ->
+                val bundle = Bundle()
+                bundle.putString(MediaMetadataCompat.METADATA_KEY_TITLE, episode.title)
+                bundle.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, _viewData.feedTitle)
+                bundle.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, _viewData.imageUrl)
+                podcastsViewModel.setPlayState(PlaybackStateCompat.STATE_PLAYING)
+                controller.transportControls.playFromUri(Uri.parse(episode.mediaUrl), bundle)
+            }
+        }
     }
 
     private fun registerMediaController(token: MediaSessionCompat.Token) {
@@ -91,6 +102,7 @@ class EpisodePlayerFragment : Fragment() {
         val controller = requireMediaController()!!
         if (controller.playbackState != null) {
             if (controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
+                podcastsViewModel.setPlayState(PlaybackStateCompat.STATE_PAUSED)
                 controller.transportControls.pause()
             } else {
                 startPlaying(episode)
@@ -129,8 +141,8 @@ class EpisodePlayerFragment : Fragment() {
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
-            Timber.d("State changed to: $state")
             state?.let {
+                Timber.d("Change play state")
                 podcastsViewModel.setPlayState(it.state)
             }
 

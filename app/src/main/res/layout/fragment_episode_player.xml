@@ -39,7 +39,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/seekBar"
             app:layout_constraintStart_toStartOf="@+id/seekBar"
-            app:playState="@{safeUnbox(viewmodel.playbackState)}" />
+            app:playState="@{viewmodel.playbackState}" />
 
         <ImageView
             android:id="@+id/btnNext"

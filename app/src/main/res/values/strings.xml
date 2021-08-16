@@ -5,4 +5,6 @@
     <string name="podcast">Podcast</string>
     <string name="subscribe">Subscribe</string>
     <string name="episode">Episode</string>
+    <string name="pause">Pause</string>
+    <string name="play">Play</string>
 </resources>

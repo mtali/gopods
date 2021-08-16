@@ -12,8 +12,10 @@ import com.colisa.podplay.repository.PodcastRepo
 import com.colisa.podplay.util.Event
 import com.colisa.podplay.util.HtmlUtils
 import kotlinx.android.parcel.Parcelize
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.*
 
@@ -57,7 +59,9 @@ class PodcastViewModel(
     }
 
     fun setPlayState(state: Int) {
-        _playbackState.value = state
+        viewModelScope.launch {
+            _playbackState.value = state
+        }
     }
 
     private fun loadPodcasts() {
@@ -138,8 +142,12 @@ class PodcastViewModel(
     }
 
     fun playOrPauseEpisode() {
-        _currentEpisode.value?.let {
-            _playOrPauseEpisodeEvent.value = Event(it)
+        viewModelScope.launch {
+            withContext(Dispatchers.Default) {
+                _currentEpisode.value?.let {
+                    _playOrPauseEpisodeEvent.postValue(Event(it))
+                }
+            }
         }
     }
 
