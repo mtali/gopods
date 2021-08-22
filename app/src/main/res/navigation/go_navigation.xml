@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/go_navigation"
+    app:startDestination="@id/podcastsFragment">
+
+    <fragment
+        android:id="@+id/podcastsFragment"
+        android:name="com.colisa.podplay.fragments.PodcastsFragment"
+        android:label="PodcastsFragment"
+        tools:layout="@layout/fragment_podcasts">
+        <action
+            android:id="@+id/action_podcastsFragment_to_podcastDetailsFragment"
+            app:destination="@id/podcastDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/podcastDetailsFragment"
+        android:name="com.colisa.podplay.fragments.PodcastDetailsFragment"
+        android:label="PodcastDetailFragment"
+        tools:layout="@layout/fragment_podcast_details" />
+</navigation>

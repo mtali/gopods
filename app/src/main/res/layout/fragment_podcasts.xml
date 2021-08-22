@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="goViewModel"
+            type="com.colisa.podplay.ui.GoViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/search_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/windowBackground"
+            android:elevation="@dimen/search_bar_elevation"
+            android:theme="@style/ToolbarStyle"
+            app:collapseIcon="@drawable/ic_navigate_before"
+            app:navigationIcon="@drawable/ic_close"
+            app:subtitleTextAppearance="@style/ToolbarStyle.Subtitle"
+            app:titleTextAppearance="@style/ToolbarStyle.Title"
+            app:titleTextColor="?android:attr/textColorPrimary" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/podcasts_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:podcasts="@{goViewModel.itunesDPodcasts}"
+            tools:listitem="@layout/item_podcast" />
+
+
+    </LinearLayout>
+</layout>

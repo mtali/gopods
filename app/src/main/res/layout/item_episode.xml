@@ -5,17 +5,15 @@
 
     <data>
 
-        <import type="com.colisa.podplay.util.HtmlUtils" />
-
         <import type="com.colisa.podplay.util.DateUtils" />
 
         <variable
-            name="viewmodel"
-            type="com.colisa.podplay.ui.viewmodels.PodcastViewModel" />
+            name="goViewModel"
+            type="com.colisa.podplay.ui.GoViewModel" />
 
         <variable
             name="episode"
-            type="com.colisa.podplay.ui.viewmodels.PodcastViewModel.EpisodeOnView" />
+            type="com.colisa.podplay.ui.GoViewModel.DRssEpisode" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -23,8 +21,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:onClick="@{() -> viewmodel.openEpisode(episode)}"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="8dp"
+        android:onClick="@{() -> goViewModel.playEpisode(episode)}">
 
         <TextView
             android:id="@+id/titleView"
@@ -32,7 +30,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             android:layout_marginEnd="0dp"
-            android:text="@{HtmlUtils.INSTANCE.htmlToSpannable(episode.title)}"
+            android:singleLine="true"
+            android:text="@{episode.title}"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_chainStyle="spread"

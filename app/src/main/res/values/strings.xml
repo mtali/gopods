@@ -1,10 +1,26 @@
 <resources>
-    <string name="app_name">PodPlay</string>
-    <string name="search">Search</string>
+    <string name="app_name">GoPods</string>
     <string name="podcast_image">Podcast image</string>
     <string name="podcast">Podcast</string>
+    <string name="podcasts">Podcasts</string>
     <string name="subscribe">Subscribe</string>
     <string name="episode">Episode</string>
     <string name="pause">Pause</string>
     <string name="play">Play</string>
+
+    <string name="podcast_cover">Podcast cover</string>
+
+
+    <!--TODO: Move to don't translate-->
+    <string name="theme_pref">theme_pref</string>
+    <string name="theme_pref_auto">theme_pref_auto</string>
+    <string name="accent_pref">accent_theme_pref</string>
+
+
+    <string name="version_name">1.0.0</string>
+    <string name="content_play">Play/pause</string>
+    <string name="queue">Queue</string>
+    <string name="favorites">Favorite episodes</string>
+    <string name="search">Search</string>
+    <string name="about">About</string>
 </resources>

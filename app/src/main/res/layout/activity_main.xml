@@ -1,37 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
 
-    <LinearLayout
+        <variable
+            name="goViewModel"
+            type="com.colisa.podplay.ui.GoViewModel" />
+    </data>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:fitsSystemWindows="true"
+        tools:context=".ui.MainActivity">
 
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/appbar"
+        <LinearLayout
+            android:id="@+id/main_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:alpha="0"
             android:orientation="vertical">
 
+            <!--HOST FRAGMENT-->
+            <FrameLayout
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <fragment
+                    android:id="@+id/go_navigation"
+                    android:name="androidx.navigation.fragment.NavHostFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:defaultNavHost="true"
+                    app:navGraph="@navigation/go_navigation"
+                    tools:ignore="FragmentTagUsage" />
+
+            </FrameLayout>
+
+            <!-- CONTROLS PANEL -->
             <include
-                android:id="@+id/toolbarLayout"
-                layout="@layout/toolbar" />
+                android:id="@+id/player_controls"
+                layout="@layout/player_controls_panel" />
 
-        </com.google.android.material.appbar.AppBarLayout>
+        </LinearLayout>
 
-
-        <fragment
-            android:id="@+id/main_nav_host"
-            android:name="androidx.navigation.fragment.NavHostFragment"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            app:defaultNavHost="true"
-            app:navGraph="@navigation/navigation"
-            tools:ignore="FragmentTagUsage" />
-
-
-    </LinearLayout>
+        <ProgressBar
+            android:id="@+id/loading_progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:clickable="false"
+            android:indeterminate="true"
+            android:indeterminateTint="?attr/colorPrimary"
+            android:indeterminateTintMode="src_in"
+            app:loading="@{goViewModel.dataLoading}" />
+    </FrameLayout>
 </layout>

@@ -1,108 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
-        <import type="android.view.View" />
-
-        <import type="com.colisa.podplay.util.HtmlUtils" />
-
         <variable
-            name="viewmodel"
-            type="com.colisa.podplay.ui.viewmodels.PodcastViewModel" />
+            name="goViewModel"
+            type="com.colisa.podplay.ui.GoViewModel" />
     </data>
 
-
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/refreshLayout"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:onRefreshListener="@{viewmodel::refresh}"
-        app:refreshing="@{viewmodel.dataLoading}">
+        android:background="@color/windowBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical">
+
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/details_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/windowBackground"
+            android:elevation="@dimen/search_bar_elevation"
+            android:theme="@style/ToolbarStyle"
+            app:collapseIcon="@drawable/ic_navigate_before"
+            app:navigationIcon="@drawable/ic_navigate_before"
+            app:subtitleTextAppearance="@style/ToolbarStyle.Subtitle"
+            app:title="@{goViewModel.activeDPodcast.name}"
+            app:titleTextAppearance="@style/ToolbarStyle.Title"
+            app:titleTextColor="?android:attr/textColorPrimary" />
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:paddingStart="16dp"
-                android:paddingTop="16dp"
-                android:paddingEnd="16dp">
+                android:orientation="vertical">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:visibility="@{viewmodel.podcast == null ? View.GONE : View.VISIBLE}">
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp">
 
-                    <TextView
-                        android:id="@+id/podcastTitle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="@{HtmlUtils.INSTANCE.htmlToSpannable(viewmodel.podcast.feedTitle)}"
-                        android:textSize="18sp"
-                        app:layout_constraintEnd_toStartOf="@+id/detailImage"
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/podcast_image_art"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="@string/podcast_cover"
+                        android:scaleType="centerCrop"
+                        app:imageUrl="@{goViewModel.activeDPodcast.imageUrl}"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        tools:text="Podcast Title" />
+                        app:shapeAppearanceOverlay="@style/ImageView.Cover"
+                        app:srcCompat="@drawable/album_art" />
 
-                    <ImageView
-                        android:id="@+id/detailImage"
-                        android:layout_width="90dp"
-                        android:layout_height="90dp"
-                        android:contentDescription="@string/podcast_image"
-                        app:imageUrl="@{viewmodel.podcast.imageUrl}"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        tools:srcCompat="@tools:sample/avatars" />
 
-                    <Button
-                        android:id="@+id/imageButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscribe"
-                        android:textColor="#757575"
-                        android:textAllCaps="false"
-                        app:cornerRadius="24dp"
-                        app:icon="@drawable/ic_baseline_add_24"
-                        app:iconTint="@color/white"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/detailImage" />
-
-                    <TextView
-                        android:id="@+id/detailDescription"
+                    <kr.co.prnd.readmore.ReadMoreTextView
+                        android:id="@+id/podcast_detail_tv"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@{HtmlUtils.INSTANCE.htmlToSpannable(viewmodel.podcast.feedDesc)}"
+                        android:layout_marginStart="8dp"
+                        android:text="@{goViewModel.rssDPodcasts.feedDesc}"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
+                        app:layout_constraintStart_toEndOf="@+id/podcast_image_art"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:readMoreMaxLine="7"
+                        app:readMoreText="More" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/episodesRecyclerView"
+                <!-- SELECTED PODCAST -->
+                <LinearLayout
+                    android:id="@+id/selected_podcast_container"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    app:episodes="@{viewmodel.podcast.episodes}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/podcast_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="marquee_forever"
+                            android:paddingStart="12dp"
+                            android:paddingTop="8dp"
+                            android:paddingEnd="12dp"
+                            android:scrollHorizontally="true"
+                            android:singleLine="true"
+                            android:textAlignment="textEnd"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textStyle="bold"
+                            app:marquee_text="@{goViewModel.activeDPodcast.name}" />
+
+                        <TextView
+                            android:id="@+id/podcast_published"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="8dp"
+                            android:singleLine="true"
+                            android:text="@{goViewModel.activeDPodcast.lastUpdated}"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                            android:textColor="?android:attr/textColorSecondary" />
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/sort_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginEnd="8dp"
+                        android:background="?android:attr/actionBarItemBackground"
+                        android:padding="8dp"
+                        app:srcCompat="@drawable/ic_sort_numeric_descending" />
+                </LinearLayout>
+
+                <!-- EPISODES -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/episodes_rv"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_weight="1"
+                    android:overScrollMode="never"
+                    android:scrollbars="none"
+                    app:episodes="@{goViewModel.rssDPodcasts.episodes}"
                     tools:listitem="@layout/item_episode" />
-
             </LinearLayout>
-
         </androidx.core.widget.NestedScrollView>
 
-
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
+    </LinearLayout>
 </layout>

@@ -8,20 +8,20 @@
         <import type="android.view.View" />
 
         <variable
-            name="viewmodel"
-            type="com.colisa.podplay.ui.viewmodels.MainViewModel" />
+            name="goViewModel"
+            type="com.colisa.podplay.ui.GoViewModel" />
 
         <variable
             name="podcast"
-            type="com.colisa.podplay.ui.viewmodels.MainViewModel.PodcastSummary" />
+            type="com.colisa.podplay.ui.GoViewModel.DItunesPodcast" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="@{() -> viewmodel.openPodcast(podcast)}"
         android:paddingStart="16dp"
         android:paddingTop="10dp"
+        android:onClick="@{() -> goViewModel.openPodcastDetail(podcast)}"
         android:paddingEnd="16dp"
         android:paddingBottom="10dp">
 
