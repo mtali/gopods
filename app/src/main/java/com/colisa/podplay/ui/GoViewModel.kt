@@ -1,10 +1,7 @@
 package com.colisa.podplay.ui
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.network.Result
@@ -56,11 +53,24 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     private val _openPodcastDetails = MutableLiveData<Event<DItunesPodcast>>()
     val openPodcastDetails: LiveData<Event<DItunesPodcast>> = _openPodcastDetails
 
+    val emptyPodcasts: LiveData<Boolean> = Transformations.map(_itunesDPodcasts) {
+        it.isEmpty()
+    }
+
+    // Label when no podcasts to show
+    private val _noPodcastsLabel = MutableLiveData<Int>()
+    val noPodcastsLabel: LiveData<Int> = _noPodcastsLabel
+
+    // Icon when no podcasts to show
+    private val _noPodcastsIconRes = MutableLiveData<Int>()
+    val noPodcastsIconRes: LiveData<Int> = _noPodcastsIconRes
+
+
+    /* ------------------ PODCASTS DETAILS -------------------*/
     // Active podcast
     private val _activeDPodcast = MutableLiveData<DItunesPodcast>()
     val activeDPodcast: LiveData<DItunesPodcast> = _activeDPodcast
 
-    /* ------------------ PODCASTS DETAILS -------------------*/
     private var rssJob: Job? = null
 
     // Rss podcasts
@@ -69,6 +79,12 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
 
     // Is new podcast
     private var loadNewRss = true
+
+    init {
+        if (query == null) {
+            _itunesDPodcasts.value = emptyList()
+        }
+    }
 
 
     fun loadPodcastRssFeed() {
@@ -191,6 +207,14 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
             it.artworkUrl100,
             it.feedUrl
         )
+    }
+
+    fun refreshPodcasts() {
+        _dataLoading.value = false
+    }
+
+    fun refreshPodcastDetails() {
+        _dataLoading.value = false
     }
 
     fun playEpisode(episode: DRssEpisode) {

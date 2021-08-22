@@ -23,4 +23,6 @@
     <string name="favorites">Favorite episodes</string>
     <string name="search">Search</string>
     <string name="about">About</string>
+    <string name="no_podcasts_image_content_description">No podcasts</string>
+    <string name="not_subscribed_to_any">No podcast subscriptions! Search topic of your interest</string>
 </resources>

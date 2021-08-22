@@ -5,6 +5,10 @@
 
     <data>
 
+        <import type="android.view.View" />
+
+        <import type="androidx.core.content.ContextCompat" />
+
         <variable
             name="goViewModel"
             type="com.colisa.podplay.ui.GoViewModel" />
@@ -28,14 +32,56 @@
             app:titleTextAppearance="@style/ToolbarStyle.Title"
             app:titleTextColor="?android:attr/textColorPrimary" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/podcasts_recycler_view"
+        <com.colisa.podplay.ui.widgets.ScrollChildSwipeRefreshLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            app:podcasts="@{goViewModel.itunesDPodcasts}"
-            tools:listitem="@layout/item_podcast" />
+            app:onRefreshListener="@{goViewModel::refreshPodcasts}"
+            app:refreshing="@{goViewModel.dataLoading}">
 
+            <RelativeLayout
+                android:id="@+id/podcasts_container_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/podcasts_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="@{goViewModel.emptyPodcasts ? View.GONE : View.VISIBLE}"
+                    app:podcasts="@{goViewModel.itunesDPodcasts}"
+                    tools:listitem="@layout/item_podcast" />
+
+                <LinearLayout
+                    android:id="@+id/no_podcasts_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:orientation="vertical"
+                    android:visibility="@{goViewModel.emptyPodcasts ? View.VISIBLE : View.GONE}">
+
+                    <ImageView
+                        android:id="@+id/no_podcasts_icon"
+                        android:layout_width="96dp"
+                        android:layout_height="96dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/no_podcasts_image_content_description"
+                        android:src="@drawable/ic_not_interested"
+                        app:tint="@color/widgetsColor" />
+
+                    <TextView
+                        android:id="@+id/no_tasks_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="@string/not_subscribed_to_any" />
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+        </com.colisa.podplay.ui.widgets.ScrollChildSwipeRefreshLayout>
 
     </LinearLayout>
 </layout>
