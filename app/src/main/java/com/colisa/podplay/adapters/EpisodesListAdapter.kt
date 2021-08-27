@@ -9,7 +9,7 @@ import com.colisa.podplay.databinding.ItemEpisodeBinding
 import com.colisa.podplay.ui.GoViewModel
 
 class EpisodeListAdapter(private val goViewModel: GoViewModel) :
-    ListAdapter<GoViewModel.DRssEpisode, EpisodeListAdapter.ViewHolder>(
+    ListAdapter<GoViewModel.REpisode, EpisodeListAdapter.ViewHolder>(
         EpisodeDiffCallback()
     ) {
 
@@ -24,7 +24,7 @@ class EpisodeListAdapter(private val goViewModel: GoViewModel) :
 
     class ViewHolder private constructor(private val binding: ItemEpisodeBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        fun bind(goViewModel: GoViewModel, item: GoViewModel.DRssEpisode) {
+        fun bind(goViewModel: GoViewModel, item: GoViewModel.REpisode) {
             binding.goViewModel = goViewModel
             binding.episode = item
             binding.executePendingBindings()
@@ -40,18 +40,18 @@ class EpisodeListAdapter(private val goViewModel: GoViewModel) :
     }
 }
 
-class EpisodeDiffCallback : DiffUtil.ItemCallback<GoViewModel.DRssEpisode>() {
+class EpisodeDiffCallback : DiffUtil.ItemCallback<GoViewModel.REpisode>() {
     override fun areItemsTheSame(
-        oldItem: GoViewModel.DRssEpisode,
-        newItem: GoViewModel.DRssEpisode
+        oldItem: GoViewModel.REpisode,
+        newItem: GoViewModel.REpisode
     ): Boolean {
         return oldItem.guid == newItem.guid
     }
 
     override fun areContentsTheSame(
-        oldItem: GoViewModel.DRssEpisode,
-        newItem: GoViewModel.DRssEpisode
+        oldItem: GoViewModel.REpisode,
+        newItem: GoViewModel.REpisode
     ): Boolean {
-        return oldItem == newItem
+        return oldItem.mediaUrl == newItem.mediaUrl
     }
 }

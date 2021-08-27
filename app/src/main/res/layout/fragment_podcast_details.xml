@@ -38,7 +38,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             app:onRefreshListener="@{goViewModel::refreshPodcastDetails}"
-            app:refreshing="@{goViewModel.dataLoading}">
+            app:refreshing="@{goViewModel.spinner}">
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
@@ -63,7 +63,7 @@
                             android:layout_gravity="center_vertical"
                             android:contentDescription="@string/podcast_cover"
                             android:scaleType="centerCrop"
-                            app:imageUrl="@{goViewModel.activeDPodcast.imageUrl}"
+                            app:imageUrl="@{goViewModel.activeIPodcast.imageUrl}"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
                             app:shapeAppearanceOverlay="@style/ImageView.Cover"
@@ -75,7 +75,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="@{goViewModel.rssDPodcasts.feedDesc}"
+                            android:text="@{goViewModel.RPodcastFeed.feedDesc}"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toEndOf="@+id/podcast_image_art"
                             app:layout_constraintTop_toTopOf="parent"
@@ -113,7 +113,7 @@
                                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
                                 android:textColor="?android:attr/textColorPrimary"
                                 android:textStyle="bold"
-                                app:marquee_text="@{goViewModel.activeDPodcast.name}" />
+                                app:marquee_text="@{goViewModel.activeIPodcast.name}" />
 
                             <TextView
                                 android:id="@+id/podcast_published"
@@ -124,7 +124,7 @@
                                 android:paddingEnd="12dp"
                                 android:paddingBottom="8dp"
                                 android:singleLine="true"
-                                android:text="@{goViewModel.activeDPodcast.lastUpdated}"
+                                android:text="@{goViewModel.activeIPodcast.lastUpdated}"
                                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                                 android:textColor="?android:attr/textColorSecondary" />
                         </LinearLayout>
@@ -150,7 +150,7 @@
                         android:layout_weight="1"
                         android:overScrollMode="never"
                         android:scrollbars="none"
-                        app:episodes="@{goViewModel.rssDPodcasts.episodes}"
+                        app:episodes="@{goViewModel.RPodcastFeed.episodes}"
                         tools:listitem="@layout/item_episode" />
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>

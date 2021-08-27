@@ -35,7 +35,7 @@ class PodcastDetailsFragment : Fragment() {
         setupSnackbar()
         setupEpisodesListAdapter()
         lifecycleScope.launchWhenStarted {
-            goViewModel.loadPodcastRssFeed()
+            goViewModel.onLoadPodcastRssFeed()
         }
         setupToolbar()
     }
@@ -57,7 +57,7 @@ class PodcastDetailsFragment : Fragment() {
     }
 
     private fun setupSnackbar() {
-        view?.setupSnackbar(viewLifecycleOwner, goViewModel.snackbarEvent, Snackbar.LENGTH_SHORT)
+        view?.setupSnackbar(viewLifecycleOwner, goViewModel.snackbar, Snackbar.LENGTH_SHORT)
     }
 
     private fun setupEpisodesListAdapter() {

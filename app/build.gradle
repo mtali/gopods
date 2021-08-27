@@ -63,6 +63,8 @@ dependencies {
     def halfbit_edge_version = "0.10"
     def pref_ktx_version = "1.1.1"
     def readmore_version = "1.0.0"
+    def room_version = '2.3.0'
+
 
     implementation "androidx.core:core-ktx:$core_version"
     implementation "androidx.appcompat:appcompat:$compat_version"
@@ -87,6 +89,10 @@ dependencies {
     implementation "de.halfbit:edge-to-edge:$halfbit_edge_version"
     implementation "androidx.preference:preference-ktx:$pref_ktx_version"
     implementation "kr.co.prnd:readmore-textview:$readmore_version"
+
+    // Room
+    implementation "androidx.room:room-ktx:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
 
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$junit_ext_version"

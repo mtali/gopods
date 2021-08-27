@@ -19,14 +19,17 @@ class RealItunesRepo @Inject constructor(
         emit(Result.Loading)
         try {
             val res = itunesService.searchItunesPodcast(term)
-            if (res.isSuccessful)
-                emit(Result.Success(res.body()))
-            else
-                emit(Result.Error("Generic error: ${res.code()}"))
-        } catch (e: Exception) {
-            emit(Result.Error("Unexpected error", e))
+            if (res.isSuccessful) {
+                emit(Result.OK(res.body()))
+            } else {
+                emit(Result.Error(Exception("Error: ${res.code()}")))
+            }
+        } catch (e: Throwable) {
+            emit(Result.Error(e))
         }
     }.flowOn(ioDispatcher)
+
+
 }
 
 

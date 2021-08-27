@@ -63,7 +63,7 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
     }
 
     private fun setupSnackbar() {
-        view?.setupSnackbar(viewLifecycleOwner, goViewModel.snackbarEvent, Snackbar.LENGTH_SHORT)
+        view?.setupSnackbar(viewLifecycleOwner, goViewModel.snackbar, Snackbar.LENGTH_SHORT)
     }
 
 
@@ -74,7 +74,7 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
 
     override fun onQueryTextSubmit(query: String?): Boolean {
         query?.let {
-            goViewModel.searchPodcasts(query)
+            goViewModel.onSearchPodcast(query)
             view?.hideKeyboard()
         }
         return true
@@ -86,7 +86,7 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
         })
     }
 
-    private fun navigateToPodcastDetails(dItunesPodcast: GoViewModel.DItunesPodcast) {
+    private fun navigateToPodcastDetails(IPodcast: GoViewModel.IPodcast) {
         val action = PodcastsFragmentDirections.actionPodcastsFragmentToPodcastDetailsFragment()
         findNavController().navigate(action)
     }

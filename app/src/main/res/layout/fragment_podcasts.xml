@@ -37,7 +37,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             app:onRefreshListener="@{goViewModel::refreshPodcasts}"
-            app:refreshing="@{goViewModel.dataLoading}">
+            app:refreshing="@{goViewModel.spinner}">
 
             <RelativeLayout
                 android:id="@+id/podcasts_container_layout"
@@ -49,8 +49,8 @@
                     android:id="@+id/podcasts_recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:visibility="@{goViewModel.emptyPodcasts ? View.GONE : View.VISIBLE}"
-                    app:podcasts="@{goViewModel.itunesDPodcasts}"
+                    android:visibility="visible"
+                    app:podcasts="@{goViewModel.searchPodcasts}"
                     tools:listitem="@layout/item_podcast" />
 
                 <LinearLayout
@@ -59,7 +59,7 @@
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
                     android:orientation="vertical"
-                    android:visibility="@{goViewModel.emptyPodcasts ? View.VISIBLE : View.GONE}">
+                    android:visibility="invisible">
 
                     <ImageView
                         android:id="@+id/no_podcasts_icon"

@@ -13,7 +13,7 @@
 
         <variable
             name="episode"
-            type="com.colisa.podplay.ui.GoViewModel.DRssEpisode" />
+            type="com.colisa.podplay.ui.GoViewModel.REpisode" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

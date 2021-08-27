@@ -23,7 +23,7 @@ fun setImageUrl(view: ImageView, url: String?) {
 }
 
 @BindingAdapter("app:episodes")
-fun setEpisodes(view: RecyclerView, items: List<GoViewModel.DRssEpisode>?) {
+fun setEpisodes(view: RecyclerView, items: List<GoViewModel.REpisode>?) {
     items?.let {
         (view.adapter as EpisodeListAdapter).submitList(items)
     }
@@ -36,7 +36,7 @@ fun setLoadingState(view: ProgressBar, loading: Boolean?) {
 }
 
 @BindingAdapter("app:podcasts")
-fun setDItunesPodcasts(view: RecyclerView, podcasts: List<GoViewModel.DItunesPodcast>?) {
+fun setDItunesPodcasts(view: RecyclerView, podcasts: List<GoViewModel.IPodcast>?) {
     podcasts?.let {
         (view.adapter as PodcastsListAdapter).submitList(podcasts)
     }

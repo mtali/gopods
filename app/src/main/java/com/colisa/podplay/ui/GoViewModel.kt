@@ -1,7 +1,9 @@
 package com.colisa.podplay.ui
 
 import android.app.Application
+import androidx.annotation.AnyThread
 import androidx.lifecycle.*
+import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.network.Result
@@ -16,7 +18,7 @@ import com.colisa.podplay.util.Event
 import com.colisa.podplay.util.HtmlUtils.htmlToSpannable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -27,129 +29,139 @@ import java.util.*
  */
 class GoViewModel(application: Application) : AndroidViewModel(application) {
 
-    /* ------------------ UNIVERSAL -------------------*/
-    // Loading indicator
-    private val _dataLoading = MutableLiveData<Boolean>()
-    val dataLoading: LiveData<Boolean> = _dataLoading
+    // Spinner
+    private val _spinner = MutableLiveData<Boolean>()
+    val spinner: LiveData<Boolean> = _spinner
 
-    /* ------------------ PODCASTS -------------------*/
-    // Repos
-    // TODO: Later inject
+    // Configurations
     private val itunesRepo: ItunesRepo by lazy { RealItunesRepo(ItunesService.instance) }
-    private val podcastsRepo: PodcastRepo by lazy { PodcastRepo(FeedService.instance) }
-
-    // Search history
-    private var query: String? = null
-
-    // Snackbar events
-    private val _snackbarEvent = MutableLiveData<Event<String>>()
-    val snackbarEvent: LiveData<Event<String>> = _snackbarEvent
-
-    // Search content
-    private val _itunesDPodcasts = MutableLiveData<List<DItunesPodcast>>()
-    val itunesDPodcasts: LiveData<List<DItunesPodcast>> = _itunesDPodcasts
-
-    // Navigate events
-    private val _openPodcastDetails = MutableLiveData<Event<DItunesPodcast>>()
-    val openPodcastDetails: LiveData<Event<DItunesPodcast>> = _openPodcastDetails
-
-    val emptyPodcasts: LiveData<Boolean> = Transformations.map(_itunesDPodcasts) {
-        it.isEmpty()
-    }
-
-    // Label when no podcasts to show
-    private val _noPodcastsLabel = MutableLiveData<Int>()
-    val noPodcastsLabel: LiveData<Int> = _noPodcastsLabel
-
-    // Icon when no podcasts to show
-    private val _noPodcastsIconRes = MutableLiveData<Int>()
-    val noPodcastsIconRes: LiveData<Int> = _noPodcastsIconRes
-
-
-    /* ------------------ PODCASTS DETAILS -------------------*/
-    // Active podcast
-    private val _activeDPodcast = MutableLiveData<DItunesPodcast>()
-    val activeDPodcast: LiveData<DItunesPodcast> = _activeDPodcast
-
-    private var rssJob: Job? = null
-
-    // Rss podcasts
-    private val _rssDPodcasts = MutableLiveData<DRssPodcast?>()
-    val rssDPodcasts: LiveData<DRssPodcast?> = _rssDPodcasts
-
-    // Is new podcast
-    private var loadNewRss = true
-
-    init {
-        if (query == null) {
-            _itunesDPodcasts.value = emptyList()
-        }
-    }
-
-
-    fun loadPodcastRssFeed() {
-        if (_dataLoading.value == true) return
-        if (loadNewRss) _rssDPodcasts.value = null
-        activeDPodcast.value?.let { dItunesPodcast ->
-            dItunesPodcast.feedUrl?.let { feedUrl ->
-                rssJob?.cancel()
-                rssJob = viewModelScope.launch {
-                    podcastsRepo.getFeed(feedUrl)
-                        .collect { result ->
-                            when (result) {
-                                is Result.Loading -> _dataLoading.value = true
-                                is Result.Error -> {
-                                    _dataLoading.value = false
-                                    _snackbarEvent.value = Event(result.message)
-                                }
-                                is Result.Success -> {
-                                    _dataLoading.value = false
-                                    handleSuccessRssFeed(result)
-                                }
-                            }
-                        }
-                }
-            }
-        }
-        if (activeDPodcast.value == null)
-            Timber.w("Failed to load podcast when activeDPodcast not initialized")
-
-    }
-
-    /**
-     * Handle success rss feed
-     * Remember to remove loading state
-     */
-    private fun handleSuccessRssFeed(result: Result.Success<Podcast?>) {
-        viewModelScope.launch {
-            result.data?.let { podcast ->
-                withContext(Dispatchers.Default) {
-                    podcast.imageUrl = activeDPodcast.value?.imageUrl ?: ""
-                    try {
-                        _rssDPodcasts.postValue(rssPodcastToDRssPodcast(podcast))
-                    } finally {
-                        _dataLoading.postValue(false)
-                    }
-                }
-            }
-        }
-
-    }
-
-    private fun rssPodcastToDRssPodcast(it: Podcast): DRssPodcast {
-        return DRssPodcast(
-            false,
-            htmlToSpannable(it.feedTitle).toString(),
-            it.feedUrl,
-            htmlToSpannable(it.feedDescription).toString(),
-            it.imageUrl,
-            rssEpisodeToDRssEpisode(it.episodes)
+    private val podcastsRepo: PodcastRepo by lazy {
+        PodcastRepo(
+            FeedService.instance,
+            GoDatabase.getInstance(application).podcastDao()
         )
     }
 
-    private fun rssEpisodeToDRssEpisode(episodes: List<Episode>): List<DRssEpisode> {
-        return episodes.map {
-            DRssEpisode(
+    // Snackbar
+    private val _snackbar = MutableLiveData<Event<String>>()
+    val snackbar: LiveData<Event<String>> = _snackbar
+
+    // Navigation
+    private val _openPodcastDetails = MutableLiveData<Event<IPodcast>>()
+    val openPodcastDetails: LiveData<Event<IPodcast>> = _openPodcastDetails
+
+
+    // Search
+    private var query: String? = null
+    private var searchJob: Job? = null
+    private val _searchPodcasts = MutableLiveData<List<IPodcast>>()
+    val searchPodcasts: LiveData<List<IPodcast>> = _searchPodcasts
+
+    // Current IPodcast
+    private var _activeIPodcast = MutableLiveData<IPodcast?>()
+    var activeIPodcast: LiveData<IPodcast?> = _activeIPodcast
+
+    // Feed
+    private var loadNewFeed = true
+    private var feedJob: Job? = null
+    private val _rPodcastFeed = MutableLiveData<RPodcast?>()
+    val rPodcastFeed: LiveData<RPodcast?> = _rPodcastFeed
+
+    fun onSearchPodcast(term: String) {
+        if (term == query && searchJob?.isActive == true) return
+        query = term
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            itunesRepo.searchPodcasts(term)
+                .collect { result ->
+                    when (result) {
+                        is Result.Loading -> {
+                            _spinner.value = true
+                        }
+                        is Result.Error -> {
+                            _spinner.value = false
+                            _snackbar.value = Event(result.exception.message ?: "Unknown error!")
+                        }
+                        is Result.OK -> {
+                            val data = result.data
+                            if (data == null || data.resultCount == 0) {
+                                _snackbar.value = Event("Empty response")
+                            } else {
+                                _searchPodcasts.value = data.toIPodcastsMainSafe()
+                            }
+                            _spinner.value = false
+                        }
+                    }
+                }
+        }
+    }
+
+    @AnyThread
+    suspend fun PodcastResponse.toIPodcastsMainSafe() = withContext(Dispatchers.Default) {
+        toIPodcasts()
+    }
+
+    private fun PodcastResponse.toIPodcasts(): List<IPodcast> {
+        return results.map {
+            IPodcast(
+                it.collectionName,
+                DateUtils.jsonDateToShortDate(it.releaseDate),
+                it.artworkUrl100,
+                it.feedUrl
+            )
+        }
+    }
+
+    fun onLoadPodcastRssFeed() {
+        feedJob?.cancel()
+        _activeIPodcast.value?.let { iPodcast ->
+            val url = iPodcast.feedUrl ?: return@let
+            feedJob = viewModelScope.launch {
+                podcastsRepo.getLivePodcastFeed(url)
+                    .collect { result ->
+                        when (result) {
+                            is Result.Loading -> {
+                                _spinner.value = true
+                            }
+                            is Result.Error -> {
+                                _spinner.value = false
+                                _snackbar.value =
+                                    Event(result.exception.message ?: "Unknown error!")
+                            }
+                            is Result.OK -> {
+                                val data = result.data
+                                if (data == null) {
+                                    _snackbar.value = Event("Empty response")
+                                } else {
+                                    _rPodcastFeed.value = data.toRPodcastMainSafe()
+                                }
+                                _spinner.value = false
+                            }
+                        }
+                    }
+            }
+        }
+    }
+
+    @AnyThread
+    suspend fun Podcast.toRPodcastMainSafe() = withContext(Dispatchers.Default) {
+        toRPodcast()
+    }
+
+    private fun Podcast.toRPodcast(): RPodcast {
+        return RPodcast(
+            false,
+            htmlToSpannable(feedTitle).toString(),
+            feedUrl,
+            htmlToSpannable(feedDescription).toString(),
+            imageUrl,
+            episodes.toREpisodes()
+        )
+    }
+
+    private fun List<Episode>.toREpisodes(): List<REpisode> {
+        return map {
+            REpisode(
                 it.guid,
                 htmlToSpannable(it.title).toString(),
                 htmlToSpannable(it.description).toString(),
@@ -161,63 +173,15 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     }
 
 
-    fun searchPodcasts(term: String) {
-        if (query == term || dataLoading.value == true) {
-            return
-        } else {
-            viewModelScope.launch {
-                itunesRepo.searchPodcasts(term)
-                    .collect {
-                        when (it) {
-                            is Result.Loading -> {
-                                _dataLoading.value = true
-                            }
-                            is Result.Success -> {
-                                _dataLoading.value = false
-                                handleSuccessItunesResponse(it)
-                            }
-                            is Result.Error -> {
-                                _dataLoading.value = false
-                                _snackbarEvent.value = Event(it.message)
-                            }
-                        }
-                    }
-            }
-        }
-    }
-
-    private fun handleSuccessItunesResponse(it: Result.Success<PodcastResponse?>) {
-        val data = it.data
-        if (data == null || data.results.isEmpty()) {
-            _snackbarEvent.value = Event("Empty response")
-            return
-        }
-        viewModelScope.launch {
-            withContext(Dispatchers.Default) {
-                val results = data.results.map { itunesPodcastToDItunesPodcast(it) }
-                _itunesDPodcasts.postValue(results)
-            }
-        }
-    }
-
-    private fun itunesPodcastToDItunesPodcast(it: PodcastResponse.ItunesPodcast): DItunesPodcast {
-        return DItunesPodcast(
-            it.collectionName,
-            DateUtils.jsonDateToShortDate(it.releaseDate),
-            it.artworkUrl100,
-            it.feedUrl
-        )
-    }
-
     fun refreshPodcasts() {
-        _dataLoading.value = false
+        _spinner.value = false
     }
 
     fun refreshPodcastDetails() {
-        _dataLoading.value = false
+        _spinner.value = false
     }
 
-    fun playEpisode(episode: DRssEpisode) {
+    fun playEpisode(episode: REpisode) {
         Timber.d("Play episode: ${episode.title}")
     }
 
@@ -225,43 +189,38 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         Called when podcast item is clicked
         via binding
      */
-    fun openPodcastDetail(podcast: DItunesPodcast) {
+    fun openPodcastDetail(podcast: IPodcast) {
         if (podcast.feedUrl == null) {
-            _snackbarEvent.value = Event("Podcast link broken")
+            _snackbar.value = Event("Podcast link broken")
         } else {
+            loadNewFeed = _activeIPodcast.value != podcast
+            if (loadNewFeed) {
+                _rPodcastFeed.value = null
+            }
+            loadNewFeed = true
+            _activeIPodcast.value = podcast
             _openPodcastDetails.value = Event(podcast)
-            loadNewRss = (podcast == _activeDPodcast.value).not()
-            _activeDPodcast.value = podcast
+
         }
     }
 
-
-    /*
-        This data class summarize itunes data for views
-        Only important data are extracted
-     */
-    data class DItunesPodcast(
+    data class IPodcast(
         var name: String? = "",
         var lastUpdated: String? = "",
         var imageUrl: String? = "",
         var feedUrl: String? = ""
     )
 
-
-    /*
-       This class summarize rss data for views
-       Podcast contain many episodes
-     */
-    data class DRssPodcast(
+    data class RPodcast(
         var subscribed: Boolean = false,
         var feedTitle: String? = "",
         var feedUrl: String? = "",
         var feedDesc: String? = "",
         var imageUrl: String? = "",
-        var episodes: List<DRssEpisode>
+        var episodes: List<REpisode>
     )
 
-    data class DRssEpisode(
+    data class REpisode(
         var guid: String? = "",
         var title: String? = "",
         var description: String? = "",

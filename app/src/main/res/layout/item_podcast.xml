@@ -13,15 +13,15 @@
 
         <variable
             name="podcast"
-            type="com.colisa.podplay.ui.GoViewModel.DItunesPodcast" />
+            type="com.colisa.podplay.ui.GoViewModel.IPodcast" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:onClick="@{() -> goViewModel.openPodcastDetail(podcast)}"
         android:paddingStart="16dp"
         android:paddingTop="10dp"
-        android:onClick="@{() -> goViewModel.openPodcastDetail(podcast)}"
         android:paddingEnd="16dp"
         android:paddingBottom="10dp">
 

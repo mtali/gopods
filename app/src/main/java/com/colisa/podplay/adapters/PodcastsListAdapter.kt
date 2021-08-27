@@ -7,11 +7,11 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.colisa.podplay.databinding.ItemPodcastBinding
 import com.colisa.podplay.ui.GoViewModel
-import com.colisa.podplay.ui.GoViewModel.DItunesPodcast
+import com.colisa.podplay.ui.GoViewModel.IPodcast
 
 
 class PodcastsListAdapter(private val goViewModel: GoViewModel) :
-    ListAdapter<DItunesPodcast, PodcastsListAdapter.ViewHolder>(PodcastDiffCallback()) {
+    ListAdapter<IPodcast, PodcastsListAdapter.ViewHolder>(PodcastDiffCallback()) {
 
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -27,7 +27,7 @@ class PodcastsListAdapter(private val goViewModel: GoViewModel) :
     class ViewHolder private constructor(private val binding: ItemPodcastBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(viewmodel: GoViewModel, podcast: DItunesPodcast) {
+        fun bind(viewmodel: GoViewModel, podcast: IPodcast) {
             binding.goViewModel = viewmodel
             binding.podcast = podcast
             binding.executePendingBindings()
@@ -43,12 +43,12 @@ class PodcastsListAdapter(private val goViewModel: GoViewModel) :
     }
 }
 
-class PodcastDiffCallback : DiffUtil.ItemCallback<DItunesPodcast>() {
-    override fun areItemsTheSame(oldItem: DItunesPodcast, newItem: DItunesPodcast): Boolean {
+class PodcastDiffCallback : DiffUtil.ItemCallback<IPodcast>() {
+    override fun areItemsTheSame(oldItem: IPodcast, newItem: IPodcast): Boolean {
         return oldItem.feedUrl == newItem.feedUrl
     }
 
-    override fun areContentsTheSame(oldItem: DItunesPodcast, newItem: DItunesPodcast): Boolean {
-        return oldItem == newItem
+    override fun areContentsTheSame(oldItem: IPodcast, newItem: IPodcast): Boolean {
+        return oldItem.name?.equals(newItem.name) == true
     }
 }
