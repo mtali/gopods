@@ -1,5 +1,6 @@
 package com.colisa.podplay.repository
 
+import androidx.lifecycle.LiveData
 import com.colisa.podplay.db.PodcastDao
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
@@ -9,7 +10,6 @@ import com.colisa.podplay.network.models.RssFeedResponse
 import com.colisa.podplay.util.DateUtils
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -32,17 +32,16 @@ class PodcastRepo(
     }.flowOn(ioDispatcher)
 
 
-    suspend fun savePodcast(podcast: Podcast) {
-        withContext(ioDispatcher) {
-            val id = podcastDao.insertPodcast(podcast)
-            for (episode in podcast.episodes) {
-                episode.podcastId = id
-                podcastDao.insertEpisode(episode)
-            }
+    suspend fun savePodcast(podcast: Podcast) = withContext(ioDispatcher) {
+        val id = podcastDao.insertPodcast(podcast)
+        for (episode in podcast.episodes) {
+            episode.podcastId = id
+            podcastDao.insertEpisode(episode)
         }
     }
 
-    fun getLocalPodcasts(): Flow<List<Podcast>> = podcastDao.getPodcasts()
+
+    fun getSubscribedPodcasts(): LiveData<List<Podcast>> = podcastDao.getPodcasts()
 
     private fun rssItemsToEpisodes(rssEpisodes: List<RssFeedResponse.EpisodeResponse>): List<Episode> {
         Timber.d("rssItemsToEpisodes() Thread: ${Thread.currentThread().name}")

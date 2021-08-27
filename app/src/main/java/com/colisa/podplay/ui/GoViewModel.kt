@@ -24,6 +24,12 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.*
 
+
+enum class DisplayState {
+    LIVE,
+    SUBSCRIBED
+}
+
 /**
  * This is a main view model for this application
  */
@@ -67,9 +73,39 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     private val _rPodcastFeed = MutableLiveData<RPodcast?>()
     val rPodcastFeed: LiveData<RPodcast?> = _rPodcastFeed
 
+    // Subscribed podcasts
+    private var _subscribedIPodcast =
+        podcastsRepo.getSubscribedPodcasts().switchMap { list ->
+            liveData {
+                emit(list.toIPodcasts())
+            }
+        }
+
+    // Podcast
+    private var activePodcast: Podcast? = null
+
+    // Live + Subscribed
+    private val state = MutableStateFlow(DisplayState.SUBSCRIBED)
+    val podcasts: LiveData<List<IPodcast>> = state.flatMapLatest { state ->
+        if (state == DisplayState.LIVE) {
+            _searchPodcasts.asFlow()
+        } else {
+            _subscribedIPodcast.asFlow()
+        }
+    }.asLiveData()
+
+    private fun showLive() {
+        state.value = DisplayState.LIVE
+    }
+
+    fun showSubscribed() {
+        state.value = DisplayState.SUBSCRIBED
+    }
+
     fun onSearchPodcast(term: String) {
         if (term == query && searchJob?.isActive == true) return
         query = term
+        showLive()
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             itunesRepo.searchPodcasts(term)
@@ -133,6 +169,8 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
                                 if (data == null) {
                                     _snackbar.value = Event("Empty response")
                                 } else {
+                                    data.imageUrl = activeIPodcast.value?.imageUrl ?: ""
+                                    activePodcast = data
                                     _rPodcastFeed.value = data.toRPodcastMainSafe()
                                 }
                                 _spinner.value = false
@@ -142,6 +180,15 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    fun saveActivePodcast() {
+        activePodcast?.let {
+            viewModelScope.launch {
+                podcastsRepo.savePodcast(it)
+            }
+        }
+    }
+
 
     @AnyThread
     suspend fun Podcast.toRPodcastMainSafe() = withContext(Dispatchers.Default) {
@@ -156,6 +203,20 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
             htmlToSpannable(feedDescription).toString(),
             imageUrl,
             episodes.toREpisodes()
+        )
+    }
+
+    @AnyThread
+    private suspend fun List<Podcast>.toIPodcasts(): List<IPodcast> = withContext(Dispatchers.IO) {
+        map { it.toIPodcast() }
+    }
+
+    private fun Podcast.toIPodcast(): IPodcast {
+        return IPodcast(
+            feedTitle,
+            DateUtils.dateToShortDate(lastUpdated),
+            imageUrl,
+            feedUrl
         )
     }
 

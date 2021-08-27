@@ -79,7 +79,7 @@
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toEndOf="@+id/podcast_image_art"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:readMoreMaxLine="7"
+                            app:readMoreMaxLine="13"
                             app:readMoreText="More" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -128,16 +128,6 @@
                                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                                 android:textColor="?android:attr/textColorSecondary" />
                         </LinearLayout>
-
-                        <ImageButton
-                            android:id="@+id/sort_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_marginEnd="8dp"
-                            android:background="?android:attr/actionBarItemBackground"
-                            android:padding="8dp"
-                            app:srcCompat="@drawable/ic_sort_numeric_descending" />
                     </LinearLayout>
 
                     <!-- EPISODES -->

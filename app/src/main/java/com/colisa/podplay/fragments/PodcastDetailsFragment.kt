@@ -1,14 +1,14 @@
 package com.colisa.podplay.fragments
 
+import android.content.Context
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.colisa.podplay.R
 import com.colisa.podplay.adapters.EpisodeListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastDetailsBinding
 import com.colisa.podplay.extensions.setupSnackbar
@@ -19,6 +19,7 @@ import timber.log.Timber
 class PodcastDetailsFragment : Fragment() {
     private var binding: FragmentPodcastDetailsBinding? = null
     private val goViewModel: GoViewModel by activityViewModels()
+    private var listener: OnPodcastDetailsListener? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,6 +33,7 @@ class PodcastDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupBinding()
+        finishSetup()
         setupSnackbar()
         setupEpisodesListAdapter()
         lifecycleScope.launchWhenStarted {
@@ -85,4 +87,36 @@ class PodcastDetailsFragment : Fragment() {
         super.onDestroyView()
         binding = null
     }
+
+    private fun finishSetup() {
+        binding?.detailsToolbar?.let { dtb ->
+            dtb.inflateMenu(R.menu.details_menu)
+            dtb.setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.action_subscribe -> {
+                        goViewModel.activeIPodcast.value?.feedUrl?.let {
+                            listener?.onSubscribe()
+                        }
+                    }
+                }
+                return@setOnMenuItemClickListener true
+            }
+        }
+    }
+
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is OnPodcastDetailsListener) {
+            listener = context
+        } else {
+            throw IllegalStateException("${requireContext()} must implement OnPodcastDetailsListener")
+        }
+    }
+
+
+}
+
+interface OnPodcastDetailsListener {
+    fun onSubscribe()
 }

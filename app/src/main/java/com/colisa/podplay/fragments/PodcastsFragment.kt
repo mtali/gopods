@@ -2,6 +2,7 @@ package com.colisa.podplay.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
@@ -54,11 +55,20 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
         binding?.searchToolbar?.let { stb ->
             stb.title = getString(R.string.podcasts)
             stb.inflateMenu(R.menu.menu_search)
-            val searchView = stb.menu.findItem(R.id.action_main_search).actionView as SearchView
+            val searchItem = stb.menu.findItem(R.id.action_main_search)
+            val searchView = searchItem.actionView as SearchView
             searchView.setOnQueryTextListener(this)
-            searchView.setOnQueryTextFocusChangeListener { x, hasFocus ->
-                Timber.d("setOnQueryTextFocusChangeListener($x, $hasFocus)")
-            }
+            searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+                override fun onMenuItemActionCollapse(p0: MenuItem?): Boolean {
+                    goViewModel.showSubscribed()
+                    return true
+                }
+
+                override fun onMenuItemActionExpand(p0: MenuItem?): Boolean {
+                    return true
+                }
+            })
+
         }
     }
 

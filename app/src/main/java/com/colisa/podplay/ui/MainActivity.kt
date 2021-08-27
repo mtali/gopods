@@ -7,13 +7,14 @@ import androidx.databinding.DataBindingUtil
 import com.colisa.podplay.R
 import com.colisa.podplay.databinding.ActivityMainBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
+import com.colisa.podplay.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.util.ThemeUtils
 import com.colisa.podplay.util.VersionUtils
 import de.halfbit.edgetoedge.Edge
 import de.halfbit.edgetoedge.edgeToEdge
 import timber.log.Timber
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
     // Binding classed
     private var binding: ActivityMainBinding? = null
@@ -70,6 +71,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         binding = null
         playerControlsPanelBinding = null
+    }
+
+    override fun onSubscribe() {
+        goViewModel.saveActivePodcast()
+        onBackPressed()
     }
 
 }

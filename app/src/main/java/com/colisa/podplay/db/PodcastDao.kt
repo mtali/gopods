@@ -1,17 +1,17 @@
 package com.colisa.podplay.db
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PodcastDao {
     @Query("SELECT * FROM podcast ORDER BY feedTitle")
-    fun getPodcasts(): Flow<List<Podcast>>
+    fun getPodcasts(): LiveData<List<Podcast>>
 
     @Query("SELECT * FROM episode WHERE podcastId = :podcastId ORDER BY releaseDate DESC")
     fun getEpisodes(podcastId: Long): List<Episode>
