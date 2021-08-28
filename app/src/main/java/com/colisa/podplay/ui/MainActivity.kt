@@ -78,4 +78,9 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         onBackPressed()
     }
 
+    override fun onUnsubscribe() {
+        goViewModel.deleteActivePodcast()
+        onBackPressed()
+    }
+
 }

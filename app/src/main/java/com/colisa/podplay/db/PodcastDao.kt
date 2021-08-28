@@ -2,6 +2,7 @@ package com.colisa.podplay.db
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
@@ -15,6 +16,12 @@ interface PodcastDao {
 
     @Query("SELECT * FROM episode WHERE podcastId = :podcastId ORDER BY releaseDate DESC")
     fun getEpisodes(podcastId: Long): List<Episode>
+
+    @Query("SELECT * FROM podcast WHERE feedUrl = :url")
+    fun getPodcast(url: String): Podcast?
+
+    @Delete
+    fun deletePodcast(podcast: Podcast)
 
     @Insert(onConflict = REPLACE)
     fun insertPodcast(podcast: Podcast): Long

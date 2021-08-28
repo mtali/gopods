@@ -153,7 +153,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         _activeIPodcast.value?.let { iPodcast ->
             val url = iPodcast.feedUrl ?: return@let
             feedJob = viewModelScope.launch {
-                podcastsRepo.getLivePodcastFeed(url)
+                podcastsRepo.getPodcasts(url)
                     .collect { result ->
                         when (result) {
                             is Result.Loading -> {
@@ -189,6 +189,14 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun deleteActivePodcast() {
+        activePodcast?.let {
+            viewModelScope.launch {
+                podcastsRepo.deletePodcast(it)
+            }
+        }
+    }
+
 
     @AnyThread
     suspend fun Podcast.toRPodcastMainSafe() = withContext(Dispatchers.Default) {
@@ -197,7 +205,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun Podcast.toRPodcast(): RPodcast {
         return RPodcast(
-            false,
+            id != null,
             htmlToSpannable(feedTitle).toString(),
             feedUrl,
             htmlToSpannable(feedDescription).toString(),
@@ -255,10 +263,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
             _snackbar.value = Event("Podcast link broken")
         } else {
             loadNewFeed = _activeIPodcast.value != podcast
-            if (loadNewFeed) {
-                _rPodcastFeed.value = null
-            }
-            loadNewFeed = true
+            _rPodcastFeed.value = null
             _activeIPodcast.value = podcast
             _openPodcastDetails.value = Event(podcast)
 

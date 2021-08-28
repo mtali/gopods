@@ -21,14 +21,23 @@ class PodcastRepo(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
-    fun getLivePodcastFeed(feedUrl: String) = flow {
+    fun getPodcasts(feedUrl: String) = flow {
         emit(Result.Loading)
-        try {
-            val r = feedService.getFeed(feedUrl)
-            emit(Result.OK(rssResponseToPodcast(feedUrl, "", r)))
-        } catch (e: Throwable) {
-            emit(Result.Error(e))
+        val podcast = podcastDao.getPodcast(feedUrl)
+        if (podcast != null) {
+            podcast.id?.let {
+                podcast.episodes = podcastDao.getEpisodes(it)
+            }
+            emit(Result.OK(podcast))
+        } else {
+            try {
+                val r = feedService.getFeed(feedUrl)
+                emit(Result.OK(rssResponseToPodcast(feedUrl, "", r)))
+            } catch (e: Throwable) {
+                emit(Result.Error(e))
+            }
         }
+
     }.flowOn(ioDispatcher)
 
 
@@ -38,6 +47,10 @@ class PodcastRepo(
             episode.podcastId = id
             podcastDao.insertEpisode(episode)
         }
+    }
+
+    suspend fun deletePodcast(podcast: Podcast) = withContext(ioDispatcher) {
+        podcastDao.deletePodcast(podcast)
     }
 
 

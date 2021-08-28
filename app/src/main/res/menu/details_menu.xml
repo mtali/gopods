@@ -3,8 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_subscribe"
+        android:id="@+id/action_subscribe_or_unsubscribe"
         android:icon="@drawable/ic_bookmark_border"
+        app:iconTint="@color/widgetsColor"
         android:title="@string/subscribe"
         app:showAsAction="ifRoom" />
 

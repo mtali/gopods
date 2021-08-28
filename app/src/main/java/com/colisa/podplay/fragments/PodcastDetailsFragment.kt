@@ -3,6 +3,7 @@ package com.colisa.podplay.fragments
 import android.content.Context
 import android.os.Bundle
 import android.view.*
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +21,7 @@ class PodcastDetailsFragment : Fragment() {
     private var binding: FragmentPodcastDetailsBinding? = null
     private val goViewModel: GoViewModel by activityViewModels()
     private var listener: OnPodcastDetailsListener? = null
+    private var menuItem: MenuItem? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,10 +38,20 @@ class PodcastDetailsFragment : Fragment() {
         finishSetup()
         setupSnackbar()
         setupEpisodesListAdapter()
+        setObservers()
         lifecycleScope.launchWhenStarted {
             goViewModel.onLoadPodcastRssFeed()
+            updateSubscribeMenu()
         }
         setupToolbar()
+    }
+
+    private fun setObservers() {
+        goViewModel.rPodcastFeed.observe(viewLifecycleOwner) { rPodcast ->
+            if (rPodcast != null) {
+                updateSubscribeMenu()
+            }
+        }
     }
 
 
@@ -91,10 +103,14 @@ class PodcastDetailsFragment : Fragment() {
     private fun finishSetup() {
         binding?.detailsToolbar?.let { dtb ->
             dtb.inflateMenu(R.menu.details_menu)
+            menuItem = dtb.menu.findItem(R.id.action_subscribe_or_unsubscribe)
+            menuItem?.isVisible = false
             dtb.setOnMenuItemClickListener {
                 when (it.itemId) {
-                    R.id.action_subscribe -> {
-                        goViewModel.activeIPodcast.value?.feedUrl?.let {
+                    R.id.action_subscribe_or_unsubscribe -> {
+                        if (goViewModel.rPodcastFeed.value?.subscribed == true) {
+                            listener?.onUnsubscribe()
+                        } else {
                             listener?.onSubscribe()
                         }
                     }
@@ -102,6 +118,28 @@ class PodcastDetailsFragment : Fragment() {
                 return@setOnMenuItemClickListener true
             }
         }
+    }
+
+    private fun updateSubscribeMenu() {
+        val podcast = goViewModel.rPodcastFeed.value ?: return
+        menuItem?.let { item ->
+            // Title
+            item.title = if (podcast.subscribed) {
+                getString(R.string.unsubscribe)
+            } else {
+                getString(R.string.subscribe)
+            }
+            // Icon
+            val icon = if (podcast.subscribed) {
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_bookmark)
+            } else {
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_bookmark_border)
+            }
+
+            item.icon = icon
+
+        }
+        menuItem?.isVisible = true
     }
 
 
@@ -113,10 +151,9 @@ class PodcastDetailsFragment : Fragment() {
             throw IllegalStateException("${requireContext()} must implement OnPodcastDetailsListener")
         }
     }
-
-
 }
 
 interface OnPodcastDetailsListener {
     fun onSubscribe()
+    fun onUnsubscribe()
 }
