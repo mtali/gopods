@@ -28,4 +28,7 @@ interface PodcastDao {
 
     @Insert(onConflict = REPLACE)
     fun insertEpisode(episode: Episode): Long
+
+    @Query("SELECT * FROM podcast ORDER BY feedTitle")
+    suspend fun getPodcastsStatic(): List<Podcast>
 }

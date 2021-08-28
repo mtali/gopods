@@ -18,7 +18,9 @@ import com.colisa.podplay.util.Event
 import com.colisa.podplay.util.HtmlUtils.htmlToSpannable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -132,6 +134,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+
     @AnyThread
     suspend fun PodcastResponse.toIPodcastsMainSafe() = withContext(Dispatchers.Default) {
         toIPodcasts()
@@ -148,36 +151,46 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onLoadPodcastRssFeed() {
+    private fun loadLocalOrLivePodcast(feedUrl: String, success: suspend (Podcast) -> Unit) {
         feedJob?.cancel()
-        _activeIPodcast.value?.let { iPodcast ->
-            val url = iPodcast.feedUrl ?: return@let
-            feedJob = viewModelScope.launch {
-                podcastsRepo.getPodcasts(url)
-                    .collect { result ->
-                        when (result) {
-                            is Result.Loading -> {
-                                _spinner.value = true
+        feedJob = viewModelScope.launch {
+            podcastsRepo.getPodcasts(feedUrl)
+                .collect { result ->
+                    when (result) {
+                        is Result.Loading -> {
+                            _spinner.value = true
+                        }
+                        is Result.Error -> {
+                            _spinner.value = false
+                            _snackbar.value =
+                                Event(result.exception.message ?: "Unknown error!")
+                        }
+                        is Result.OK -> {
+                            val data = result.data
+                            if (data == null) {
+                                _snackbar.value = Event("Empty response")
+                            } else {
+                                success(result.data)
                             }
-                            is Result.Error -> {
-                                _spinner.value = false
-                                _snackbar.value =
-                                    Event(result.exception.message ?: "Unknown error!")
-                            }
-                            is Result.OK -> {
-                                val data = result.data
-                                if (data == null) {
-                                    _snackbar.value = Event("Empty response")
-                                } else {
-                                    data.imageUrl = activeIPodcast.value?.imageUrl ?: ""
-                                    activePodcast = data
-                                    _rPodcastFeed.value = data.toRPodcastMainSafe()
-                                }
-                                _spinner.value = false
-                            }
+                            _spinner.value = false
                         }
                     }
-            }
+                }
+        }
+    }
+
+    fun onLoadPodcastRssFeed() {
+        val url = _activeIPodcast.value?.feedUrl ?: return
+        loadLocalOrLivePodcast(url) { podcast ->
+            podcast.imageUrl = activeIPodcast.value?.imageUrl ?: ""
+            activePodcast = podcast
+            _rPodcastFeed.value = podcast.toRPodcastMainSafe()
+        }
+    }
+
+    fun setActivePodcast(feedUrl: String) {
+        loadLocalOrLivePodcast(feedUrl) {
+            openPodcastDetail(it.toIPodcast())
         }
     }
 
@@ -262,7 +275,6 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         if (podcast.feedUrl == null) {
             _snackbar.value = Event("Podcast link broken")
         } else {
-            loadNewFeed = _activeIPodcast.value != podcast
             _rPodcastFeed.value = null
             _activeIPodcast.value = podcast
             _openPodcastDetails.value = Event(podcast)

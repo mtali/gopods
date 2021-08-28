@@ -1,18 +1,22 @@
 package com.colisa.podplay.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.work.*
 import com.colisa.podplay.R
 import com.colisa.podplay.databinding.ActivityMainBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
 import com.colisa.podplay.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.util.ThemeUtils
 import com.colisa.podplay.util.VersionUtils
+import com.colisa.podplay.workers.EpisodeUpdateWorker
 import de.halfbit.edgetoedge.Edge
 import de.halfbit.edgetoedge.edgeToEdge
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
@@ -44,6 +48,18 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         }
 
         initMedia()
+        scheduleJobs()
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        intent?.let { that ->
+            val url = that.getStringExtra(EpisodeUpdateWorker.EXTRA_FEED_URL)
+            if (url != null) {
+                goViewModel.setActivePodcast(url)
+            }
+
+        }
     }
 
     private fun initMedia() {
@@ -81,6 +97,30 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     override fun onUnsubscribe() {
         goViewModel.deleteActivePodcast()
         onBackPressed()
+    }
+
+    private fun scheduleJobs() {
+        val constraints: Constraints = Constraints.Builder().apply {
+            setRequiredNetworkType(NetworkType.CONNECTED)
+            setRequiresCharging(true)
+        }.build()
+
+        val request = PeriodicWorkRequestBuilder<EpisodeUpdateWorker>(
+            1, TimeUnit.HOURS
+        )
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            TAG_EPISODE_UPDATE_JOB,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+
+    companion object {
+        private const val TAG_EPISODE_UPDATE_JOB = "com.colisa.gopods.episodes"
     }
 
 }

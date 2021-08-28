@@ -10,6 +10,7 @@ import com.colisa.podplay.network.models.RssFeedResponse
 import com.colisa.podplay.util.DateUtils
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -54,6 +55,58 @@ class PodcastRepo(
     }
 
 
+    private fun getNewEpisodes(localPodcast: Podcast) = flow {
+        try {
+            val res = feedService.getFeed(localPodcast.feedUrl)
+            val remotePodcast =
+                rssResponseToPodcast(localPodcast.feedUrl, localPodcast.imageUrl, res)
+            remotePodcast?.let {
+                val localEpisode = podcastDao.getEpisodes(localPodcast.id!!)
+                val newEpisodes = remotePodcast.episodes.filter { episode ->
+                    localEpisode.find { episode.guid == it.guid } == null
+                }
+                emit(Result.OK(newEpisodes))
+            }
+        } catch (e: Throwable) {
+            emit(Result.Error(e))
+        }
+    }.flowOn(ioDispatcher)
+
+    private suspend fun saveNewEpisodes(podcastId: Long, episode: List<Episode>) {
+        withContext(ioDispatcher) {
+            for (e in episode) {
+                e.podcastId = podcastId
+                podcastDao.insertEpisode(e)
+            }
+        }
+    }
+
+    fun checkNewSubscribedPodcastsEpisodes() = flow {
+        val updateInfo = mutableListOf<PodcastUpdateInfo>()
+        val podcasts = podcastDao.getPodcastsStatic()
+        var processCount = podcasts.count()
+        for (podcast in podcasts) {
+            getNewEpisodes(podcast)
+                .collect {
+                    if (it is Result.OK) {
+                        val newEpisodes = it.data
+                        if (newEpisodes.count() > 0) {
+                            saveNewEpisodes(podcast.id!!, newEpisodes)
+                            updateInfo.add(
+                                PodcastUpdateInfo(
+                                    podcast.feedUrl, podcast.feedTitle, newEpisodes.count()
+                                )
+                            )
+                        }
+                        processCount--
+                        if (processCount == 0) {
+                            emit(updateInfo)
+                        }
+                    }
+                }
+        }
+    }.flowOn(ioDispatcher)
+
     fun getSubscribedPodcasts(): LiveData<List<Podcast>> = podcastDao.getPodcasts()
 
     private fun rssItemsToEpisodes(rssEpisodes: List<RssFeedResponse.EpisodeResponse>): List<Episode> {
@@ -92,4 +145,9 @@ class PodcastRepo(
             episodes = rssItemsToEpisodes(items)
         )
     }
+
+    /**
+     * Hold update details for a single podcast
+     */
+    class PodcastUpdateInfo(val feedUrl: String, val name: String, val newCount: Int)
 }
