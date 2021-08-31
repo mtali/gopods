@@ -2,6 +2,7 @@ package com.colisa.podplay.extensions
 
 import android.content.Context
 import android.view.View
+import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -10,6 +11,18 @@ import com.colisa.podplay.R
 import com.colisa.podplay.util.Event
 import com.colisa.podplay.util.EventObserver
 import com.google.android.material.snackbar.Snackbar
+
+
+inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+        override fun onGlobalLayout() {
+            if (measuredWidth > 0 && measuredHeight > 0) {
+                viewTreeObserver.removeOnGlobalLayoutListener(this)
+                f()
+            }
+        }
+    })
+}
 
 fun View.showSnackbar(text: String, time: Int) {
     val snack = Snackbar.make(this, text, time)

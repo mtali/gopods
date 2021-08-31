@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/np_cover"
+            android:layout_width="@android:dimen/thumbnail_height"
+            android:layout_height="@android:dimen/thumbnail_height"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/covers_pref_title"
+            android:scaleType="centerCrop"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ImageView.Cover"
+            app:srcCompat="@drawable/album_art" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="Full-Time Open Source"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/np_cover" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Buferring ..."
+            app:layout_constraintEnd_toEndOf="@+id/textView"
+            app:layout_constraintStart_toStartOf="@+id/textView"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2">
+
+            <TextView
+                android:id="@+id/np_seek"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="16dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <SeekBar
+                android:id="@+id/np_seek_bar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:progressBackgroundTint="?attr/colorPrimary"
+                android:progressBackgroundTintMode="src_in"
+                android:splitTrack="false" />
+
+            <TextView
+                android:id="@+id/np_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="16dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                android:textColor="?android:attr/textColorSecondary" />
+
+        </LinearLayout>
+
+
+        <ImageButton
+            android:id="@+id/np_fast_rewind"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="32dp"
+            android:layout_weight="1"
+            android:background="?android:attr/actionBarItemBackground"
+            android:contentDescription="@string/fast_seeking_pref_title"
+            android:minHeight="48dp"
+            android:padding="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/np_play"
+            app:layout_constraintEnd_toStartOf="@+id/np_play"
+            app:layout_constraintTop_toTopOf="@+id/np_play"
+            app:srcCompat="@drawable/ic_fast_rewind" />
+
+        <ImageButton
+            android:id="@+id/np_play"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="?android:attr/actionBarItemBackground"
+            android:contentDescription="@string/content_play"
+            android:padding="20dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+            app:srcCompat="@drawable/ic_play" />
+
+        <ImageButton
+            android:id="@+id/np_fast_forward"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="32dp"
+            android:layout_weight="1"
+            android:background="?android:attr/actionBarItemBackground"
+            android:contentDescription="@string/fast_seeking_pref_title"
+            android:padding="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/np_play"
+            app:layout_constraintStart_toEndOf="@+id/np_play"
+            app:layout_constraintTop_toTopOf="@+id/np_play"
+            app:srcCompat="@drawable/ic_fast_forward" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

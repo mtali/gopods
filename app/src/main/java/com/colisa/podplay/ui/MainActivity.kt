@@ -6,16 +6,24 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.work.*
+import com.afollestad.materialdialogs.LayoutMode
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
+import com.afollestad.materialdialogs.callbacks.onShow
+import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.customview.getCustomView
 import com.colisa.podplay.R
 import com.colisa.podplay.databinding.ActivityMainBinding
+import com.colisa.podplay.databinding.NowPlayingBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
+import com.colisa.podplay.extensions.afterMeasured
 import com.colisa.podplay.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.util.ThemeUtils
 import com.colisa.podplay.util.VersionUtils
 import com.colisa.podplay.workers.EpisodeUpdateWorker
 import de.halfbit.edgetoedge.Edge
 import de.halfbit.edgetoedge.edgeToEdge
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
@@ -23,9 +31,12 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     // Binding classed
     private var binding: ActivityMainBinding? = null
     private var playerControlsPanelBinding: PlayerControlsPanelBinding? = null
+    private var nowPlayingBinding: NowPlayingBinding? = null
 
     // View model
     private val goViewModel: GoViewModel by viewModels()
+
+    private lateinit var playingDialog: MaterialDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +84,21 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     }
 
     private fun openNowPlaying() {
-        Timber.d("Open now playing!")
+        playingDialog = MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
+            customView(R.layout.now_playing)
+            if (VersionUtils.isOreoMR1() && !ThemeUtils.isDeviceLand(resources)) {
+                edgeToEdge {
+                    view.fit { Edge.Bottom }
+                }
+            }
+            getCustomView().afterMeasured {
+                playingDialog.setPeekHeight(height)
+            }
+
+            onShow {
+
+            }
+        }
     }
 
     private fun setupBinding() {

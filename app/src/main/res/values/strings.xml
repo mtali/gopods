@@ -27,4 +27,15 @@
     <string name="about">About</string>
     <string name="no_podcasts_image_content_description">No podcasts</string>
     <string name="not_subscribed_to_any">No podcast subscriptions! Search topic of your interest</string>
+    <string name="covers_pref_title">Now playing cover</string>
+    <string name="content_playback_speed">Playback speed</string>
+    <string name="favorites_save_time">Save time</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="favorite_add">Add</string>
+    <string name="content_repeat">Repeat</string>
+    <string name="fast_seeking_pref_title">N/A</string>
+    <string name="content_skip_prev">N/A</string>
+    <string name="content_skip_next">N/A</string>
+    <string name="precise_volume_pref_title">N/A</string>
+    <string name="unknown_year">N/A</string>
 </resources>

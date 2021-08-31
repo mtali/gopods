@@ -2,6 +2,7 @@ package com.colisa.podplay.util
 
 import android.content.Context
 import android.content.res.Configuration
+import android.content.res.Resources
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -96,4 +97,8 @@ object ThemeUtils {
     } catch (e: Exception) {
         Pair(R.style.BaseTheme_DeepPurple, 3)
     }
+
+    @JvmStatic
+    fun isDeviceLand(resources: Resources) =
+        resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 }
