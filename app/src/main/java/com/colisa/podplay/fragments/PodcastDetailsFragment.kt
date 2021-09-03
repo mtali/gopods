@@ -82,6 +82,7 @@ class PodcastDetailsFragment : Fragment() {
                 val layoutManager = LinearLayoutManager(context)
                 val adapter = EpisodeListAdapter(viewModel)
                 val divider = DividerItemDecoration(recycler.context, layoutManager.orientation)
+
                 recycler.apply {
                     this.adapter = adapter
                     this.layoutManager = layoutManager

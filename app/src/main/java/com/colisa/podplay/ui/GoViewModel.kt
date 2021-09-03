@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import java.util.*
 
 
@@ -95,6 +94,11 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
             _subscribedIPodcast.asFlow()
         }
     }.asLiveData()
+
+    // Episode
+    private val _playEpisodeEvent = MutableLiveData<Event<REpisode>>()
+    val playEpisodeEvent: LiveData<Event<REpisode>> = _playEpisodeEvent
+
 
     private fun showLive() {
         state.value = DisplayState.LIVE
@@ -264,7 +268,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun playEpisode(episode: REpisode) {
-        Timber.d("Play episode: ${episode.title}")
+        _playEpisodeEvent.value = Event(episode)
     }
 
     /*
