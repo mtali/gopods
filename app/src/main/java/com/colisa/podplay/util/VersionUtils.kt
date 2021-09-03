@@ -10,5 +10,8 @@ object VersionUtils {
     fun isOreoMR1() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
 
     @JvmStatic
+    fun isOreo() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+
+    @JvmStatic
     fun isMarshmallow() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 }
