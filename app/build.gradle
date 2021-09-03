@@ -66,6 +66,7 @@ dependencies {
     def room_version = '2.3.0'
     def work_version = '2.5.0'
     def coroutine_version = '1.5.1'
+    def exoplayer_version = '2.15.0'
 
 
     implementation "androidx.core:core-ktx:$core_version"
@@ -102,6 +103,11 @@ dependencies {
     // Coroutine
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutine_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutine_version"
+
+    // ExoPlayer
+    implementation "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
+    implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
+    implementation "com.google.android.exoplayer:extension-mediasession:$exoplayer_version"
 
 
     testImplementation "junit:junit:$junit_version"
