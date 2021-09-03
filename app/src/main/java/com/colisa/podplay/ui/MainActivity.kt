@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
     private var mediaControllerCallback: MediaControllerCallback? = null
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTheme(ThemeUtils.getAccentedTheme().first)
@@ -86,6 +87,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         scheduleJobs()
         handleIntent(intent)
         setObservers()
+
     }
 
     private fun setObservers() {
@@ -116,11 +118,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
     override fun onStart() {
         super.onStart()
-        if (mediaBrowser.isConnected) {
-            if (MediaControllerCompat.getMediaController(this) == null) {
-                registerMediaController(mediaBrowser.sessionToken)
-            }
-        } else {
+        if (!mediaBrowser.isConnected) {
             mediaBrowser.connect()
         }
     }
@@ -247,12 +245,29 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     inner class MediaControllerCallback : MediaControllerCompat.Callback() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
-            Timber.d("onMetadataChanged: $metadata")
+            Timber.d("onMetadataChanged: ${metadata?.mediaMetadata}")
         }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
-            Timber.d("onPlaybackStateChanged: $state")
+            when (state?.state) {
+                PlaybackStateCompat.STATE_BUFFERING -> {
+                    Timber.d("buffering")
+                }
+                PlaybackStateCompat.STATE_PLAYING -> {
+                    Timber.d("playing")
+                }
+                PlaybackStateCompat.STATE_PAUSED -> {
+                    Timber.d("paused")
+                }
+
+                PlaybackStateCompat.STATE_STOPPED -> {
+                    Timber.d("Stopped")
+                }
+                else -> {
+                    Timber.d("Unhandled state: ${state?.state}")
+                }
+            }
         }
 
         override fun onSessionEvent(event: String?, extras: Bundle?) {
