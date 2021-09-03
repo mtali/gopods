@@ -20,9 +20,10 @@
 
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:onClick="@{() -> goViewModel.playEpisode(episode)}">
+        android:background="?attr/selectableItemBackground"
+        android:onClick="@{() -> goViewModel.playEpisode(episode)}"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/titleView"
