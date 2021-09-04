@@ -9,6 +9,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -110,10 +111,22 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     }
 
     private fun startPlaying(episode: GoViewModel.REpisode) {
-        val controller = MediaControllerCompat.getMediaController(this)
-        controller.transportControls.playFromUri(
-            Uri.parse(episode.mediaUrl), null
-        )
+
+        val podcast = goViewModel.rPodcastFeed.value
+        if (podcast != null) {
+            val bundle = Bundle()
+            val controller = MediaControllerCompat.getMediaController(this)
+            bundle.apply {
+                putString(MediaMetadataCompat.METADATA_KEY_TITLE, episode.title)
+                putString(MediaMetadataCompat.METADATA_KEY_ARTIST, podcast.feedTitle)
+                putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, podcast.imageUrl)
+            }
+
+            controller.transportControls.playFromUri(Uri.parse(episode.mediaUrl), bundle)
+        } else {
+            Toast.makeText(this, "Can't play episode, podcast still loading!", Toast.LENGTH_LONG)
+                .show()
+        }
     }
 
     override fun onStart() {
@@ -251,22 +264,34 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
             when (state?.state) {
-                PlaybackStateCompat.STATE_BUFFERING -> {
-                    Timber.d("buffering")
+
+                PlaybackStateCompat.STATE_NONE -> {
+                    Timber.d("onPlaybackStateChanged: STATE_NONE")
                 }
-                PlaybackStateCompat.STATE_PLAYING -> {
-                    Timber.d("playing")
+                PlaybackStateCompat.STATE_STOPPED -> {
+                    Timber.d("onPlaybackStateChanged: STATE_STOPPED")
                 }
                 PlaybackStateCompat.STATE_PAUSED -> {
-                    Timber.d("paused")
+                    Timber.d("onPlaybackStateChanged: STATE_PAUSED")
                 }
-
-                PlaybackStateCompat.STATE_STOPPED -> {
-                    Timber.d("Stopped")
+                PlaybackStateCompat.STATE_PLAYING -> {
+                    Timber.d("onPlaybackStateChanged: STATE_PLAYING")
+                }
+                PlaybackStateCompat.STATE_FAST_FORWARDING -> {
+                    Timber.d("onPlaybackStateChanged: STATE_FAST_FORWARDING")
+                }
+                PlaybackStateCompat.STATE_REWINDING -> {
+                    Timber.d("onPlaybackStateChanged: STATE_REWINDING")
+                }
+                PlaybackStateCompat.STATE_BUFFERING -> {
+                    Timber.d("onPlaybackStateChanged: STATE_BUFFERING")
+                }
+                PlaybackStateCompat.STATE_ERROR -> {
+                    Timber.d("onPlaybackStateChanged: STATE_ERROR")
                 }
                 else -> {
-                    Timber.d("Unhandled state: ${state?.state}")
                 }
+
             }
         }
 
