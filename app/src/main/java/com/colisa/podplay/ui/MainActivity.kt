@@ -9,6 +9,8 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.view.Gravity
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -25,10 +27,7 @@ import com.colisa.podplay.R
 import com.colisa.podplay.databinding.ActivityMainBinding
 import com.colisa.podplay.databinding.NowPlayingBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
-import com.colisa.podplay.extensions.afterMeasured
-import com.colisa.podplay.extensions.isPaused
-import com.colisa.podplay.extensions.isPlaying
-import com.colisa.podplay.extensions.stateName
+import com.colisa.podplay.extensions.*
 import com.colisa.podplay.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.player.GoPlayerService
 import com.colisa.podplay.util.EventObserver
@@ -274,6 +273,13 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         }
     }
 
+    private fun quickError(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).apply {
+            setGravity(Gravity.CENTER, 0, 0)
+            show()
+        }
+    }
+
 
     /**
      * This receive callbacks for service connection [MediaBrowserServiceCompat]
@@ -306,6 +312,9 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             super.onPlaybackStateChanged(state)
             state?.let {
                 npViewModel.setIsPlaying(it.isPlaying)
+                when {
+                    it.isError -> quickError("Error playing episode!")
+                }
             }
             Timber.d("onPlaybackStateChanged() = ${state?.stateName}")
         }
