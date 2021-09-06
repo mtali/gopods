@@ -9,7 +9,6 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -27,6 +26,9 @@ import com.colisa.podplay.databinding.ActivityMainBinding
 import com.colisa.podplay.databinding.NowPlayingBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
 import com.colisa.podplay.extensions.afterMeasured
+import com.colisa.podplay.extensions.isPaused
+import com.colisa.podplay.extensions.isPlaying
+import com.colisa.podplay.extensions.stateName
 import com.colisa.podplay.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.player.GoPlayerService
 import com.colisa.podplay.util.EventObserver
@@ -47,6 +49,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
     // View model
     private val goViewModel: GoViewModel by viewModels()
+    private val npViewModel: NowPlayingViewModel by viewModels()
 
     private lateinit var playingDialog: MaterialDialog
 
@@ -88,8 +91,18 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         scheduleJobs()
         handleIntent(intent)
         setObservers()
+        setupControls()
 
     }
+
+    private fun setupControls() {
+        playerControlsPanelBinding?.let {
+            it.playPauseButton.setOnClickListener {
+                togglePlayPause()
+            }
+        }
+    }
+
 
     private fun setObservers() {
         goViewModel.playEpisodeEvent.observe(this, EventObserver {
@@ -97,35 +110,39 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         })
     }
 
+
     private fun onEpisodeSelected(episode: GoViewModel.REpisode) {
-        val controller = MediaControllerCompat.getMediaController(this)
-        if (controller.playbackState != null) {
-            if (controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
-                controller.transportControls.pause()
+        val podcast = goViewModel.rPodcastFeed.value
+        podcast?.let {
+            val npEpisode = NowPlayingViewModel.NowPlayingEpisode.from(episode, podcast)
+            val controller = MediaControllerCompat.getMediaController(this)
+            if (controller.playbackState != null) {
+                if (controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
+                    controller.transportControls.pause()
+                } else {
+                    startPlaying(npEpisode)
+                }
             } else {
-                startPlaying(episode)
+                startPlaying(npEpisode)
             }
-        } else {
-            startPlaying(episode)
         }
     }
 
-    private fun startPlaying(episode: GoViewModel.REpisode) {
-
-        val podcast = goViewModel.rPodcastFeed.value
-        if (podcast != null) {
+    /**
+     * Play podcast episode, call this when all you want to play
+     * We don't check conditions here
+     */
+    private fun startPlaying(np: NowPlayingViewModel.NowPlayingEpisode) {
+        val controller = MediaControllerCompat.getMediaController(this)
+        npViewModel.saveRecentEpisode(np)
+        controller?.let {
             val bundle = Bundle()
-            val controller = MediaControllerCompat.getMediaController(this)
             bundle.apply {
-                putString(MediaMetadataCompat.METADATA_KEY_TITLE, episode.title)
-                putString(MediaMetadataCompat.METADATA_KEY_ARTIST, podcast.feedTitle)
-                putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, podcast.imageUrl)
+                putString(MediaMetadataCompat.METADATA_KEY_TITLE, np.title)
+                putString(MediaMetadataCompat.METADATA_KEY_ARTIST, np.podcastTitle)
+                putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, np.artUrl)
             }
-
-            controller.transportControls.playFromUri(Uri.parse(episode.mediaUrl), bundle)
-        } else {
-            Toast.makeText(this, "Can't play episode, podcast still loading!", Toast.LENGTH_LONG)
-                .show()
+            it.transportControls.playFromUri(Uri.parse(np.mediaUrl), bundle)
         }
     }
 
@@ -158,7 +175,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
     private fun initMedia() {
         playerControlsPanelBinding?.let { playerBinding ->
-            with(playerBinding.playingSongContainer) {
+            with(playerBinding.playingEpisodeContainer) {
                 setOnClickListener {
                     openNowPlaying()
                 }
@@ -188,6 +205,10 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         binding?.let {
             it.lifecycleOwner = this
             it.goViewModel = goViewModel
+        }
+        playerControlsPanelBinding?.let {
+            it.lifecycleOwner = this
+            it.npViewModel = npViewModel
         }
     }
 
@@ -234,6 +255,26 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         controller.registerCallback(mediaControllerCallback!!)
     }
 
+    private fun togglePlayPause() {
+        val controller = MediaControllerCompat.getMediaController(this)
+        if (controller != null) {
+
+            if (controller.playbackState != null) {
+                val state = controller.playbackState
+                when {
+                    state.isPlaying -> controller.transportControls.pause()
+                    state.isPaused -> controller.transportControls.play()
+                    else -> {
+                        npViewModel.recentEpisode.value?.let { startPlaying(it) }
+                    }
+                }
+            } else {
+                npViewModel.recentEpisode.value?.let { startPlaying(it) }
+            }
+        }
+    }
+
+
     /**
      * This receive callbacks for service connection [MediaBrowserServiceCompat]
      */
@@ -263,36 +304,10 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
-            when (state?.state) {
-
-                PlaybackStateCompat.STATE_NONE -> {
-                    Timber.d("onPlaybackStateChanged: STATE_NONE")
-                }
-                PlaybackStateCompat.STATE_STOPPED -> {
-                    Timber.d("onPlaybackStateChanged: STATE_STOPPED")
-                }
-                PlaybackStateCompat.STATE_PAUSED -> {
-                    Timber.d("onPlaybackStateChanged: STATE_PAUSED")
-                }
-                PlaybackStateCompat.STATE_PLAYING -> {
-                    Timber.d("onPlaybackStateChanged: STATE_PLAYING")
-                }
-                PlaybackStateCompat.STATE_FAST_FORWARDING -> {
-                    Timber.d("onPlaybackStateChanged: STATE_FAST_FORWARDING")
-                }
-                PlaybackStateCompat.STATE_REWINDING -> {
-                    Timber.d("onPlaybackStateChanged: STATE_REWINDING")
-                }
-                PlaybackStateCompat.STATE_BUFFERING -> {
-                    Timber.d("onPlaybackStateChanged: STATE_BUFFERING")
-                }
-                PlaybackStateCompat.STATE_ERROR -> {
-                    Timber.d("onPlaybackStateChanged: STATE_ERROR")
-                }
-                else -> {
-                }
-
+            state?.let {
+                npViewModel.setIsPlaying(it.isPlaying)
             }
+            Timber.d("onPlaybackStateChanged() = ${state?.stateName}")
         }
 
         override fun onSessionEvent(event: String?, extras: Bundle?) {

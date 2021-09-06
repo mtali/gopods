@@ -5,6 +5,9 @@
 
     <data>
 
+        <variable
+            name="npViewModel"
+            type="com.colisa.podplay.ui.NowPlayingViewModel" />
     </data>
 
     <merge
@@ -38,7 +41,7 @@
                 android:padding="4dp">
 
                 <LinearLayout
-                    android:id="@+id/playing_song_container"
+                    android:id="@+id/playing_episode_container"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -51,29 +54,30 @@
                     android:paddingBottom="@dimen/player_controls_padding_normal">
 
                     <TextView
-                        android:id="@+id/playing_song"
+                        android:id="@+id/playing_episode_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit="marquee_forever"
                         android:singleLine="true"
-                        android:text="@string/app_name"
                         android:textAlignment="textStart"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                         android:textColor="?android:attr/textColorPrimary"
-                        android:textStyle="bold" />
+                        android:layout_marginBottom="8dp"
+                        android:textStyle="bold"
+                        app:episodeTitle="@{npViewModel.recentEpisode}" />
 
                     <TextView
-                        android:id="@+id/playing_artist"
+                        android:id="@+id/playing_episode_podcast_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit="marquee_forever"
                         android:singleLine="true"
-                        android:text="@string/version_name"
                         android:textAlignment="textStart"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                        android:textColor="?android:attr/textColorPrimary" />
+                        android:textColor="?android:attr/textColorPrimary"
+                        app:podcastTitle="@{npViewModel.recentEpisode}" />
                 </LinearLayout>
 
                 <ImageButton
@@ -84,17 +88,7 @@
                     android:background="?android:attr/actionBarItemBackground"
                     android:contentDescription="@string/content_play"
                     android:padding="8dp"
-                    app:srcCompat="@drawable/ic_play" />
-
-                <ImageButton
-                    android:id="@+id/favorites_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:background="?android:attr/actionBarItemBackground"
-                    android:contentDescription="@string/favorites"
-                    android:padding="8dp"
-                    app:srcCompat="@drawable/ic_favorite_empty" />
+                    app:setPlayPauseSrc="@{npViewModel.isPlaying}" />
 
             </LinearLayout>
         </LinearLayout>

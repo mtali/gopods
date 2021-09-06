@@ -26,6 +26,7 @@
     <string name="theme_pref">theme_pref</string>
     <string name="theme_pref_auto">theme_pref_auto</string>
     <string name="accent_pref">accent_theme_pref</string>
+    <string name="pref_recent_episode">pref_restore_latest_episode</string>
 
 
     <string name="version_name">1.0.0</string>
@@ -47,4 +48,5 @@
     <string name="content_skip_next">N/A</string>
     <string name="precise_volume_pref_title">N/A</string>
     <string name="unknown_year">N/A</string>
+
 </resources>

@@ -1,16 +1,19 @@
 package com.colisa.podplay.bindings
 
 import android.text.TextUtils
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.colisa.podplay.R
 import com.colisa.podplay.adapters.EpisodeListAdapter
 import com.colisa.podplay.adapters.PodcastsListAdapter
 import com.colisa.podplay.extensions.handleViewVisibility
 import com.colisa.podplay.ui.GoViewModel
+import com.colisa.podplay.ui.NowPlayingViewModel
 
 
 @BindingAdapter("app:imageUrl")
@@ -50,5 +53,32 @@ fun setMarqueeText(view: TextView, text: String?) {
         view.isSingleLine = true
         view.marqueeRepeatLimit = -1
         view.isSelected = true
+    }
+}
+
+@BindingAdapter("app:episodeTitle")
+fun setEpisodeTitle(view: TextView, episode: NowPlayingViewModel.NowPlayingEpisode?) {
+    if (episode != null) {
+        view.text = episode.title
+    } else {
+        view.text = view.context.getString(R.string.app_name)
+    }
+}
+
+@BindingAdapter("app:podcastTitle")
+fun setPodcastTitle(view: TextView, episode: NowPlayingViewModel.NowPlayingEpisode?) {
+    if (episode != null) {
+        view.text = episode.podcastTitle
+    } else {
+        view.text = view.context.getString(R.string.version_name)
+    }
+}
+
+@BindingAdapter("app:setPlayPauseSrc")
+fun setPlayPauseSrc(view: ImageButton, isPlaying: Boolean?) {
+    if (isPlaying == true) {
+        view.setImageResource(R.drawable.ic_pause)
+    } else {
+        view.setImageResource(R.drawable.ic_play)
     }
 }

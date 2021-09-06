@@ -54,7 +54,7 @@ class GoPlayerService : MediaBrowserServiceCompat() {
         notificationManager =
             NotificationManager(this, mediaSession.sessionToken, PlayerNotificationListener())
 
-//        notificationManager.showNotificationForPlayer(exoPlayer)
+        // notificationManager.showNotificationForPlayer(exoPlayer)
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
