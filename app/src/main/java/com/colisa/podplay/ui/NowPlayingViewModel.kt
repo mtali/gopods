@@ -19,6 +19,7 @@ class NowPlayingViewModel(application: Application) : AndroidViewModel(applicati
     data class NowPlayingEpisode(
         var title: String = "",
         var artUrl: String = "",
+        var artUrl600: String = "",
         var mediaUrl: String = "",
         var description: String = "",
         var podcastTitle: String = "",
@@ -31,6 +32,7 @@ class NowPlayingViewModel(application: Application) : AndroidViewModel(applicati
                 return NowPlayingEpisode(
                     title = e.title ?: "",
                     artUrl = p.imageUrl ?: "",
+                    artUrl600 = p.imageUrl600 ?: "",
                     mediaUrl = e.mediaUrl ?: "",
                     description = e.description ?: "",
                     podcastTitle = p.feedTitle ?: ""

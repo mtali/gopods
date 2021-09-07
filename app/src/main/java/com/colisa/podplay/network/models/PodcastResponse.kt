@@ -8,6 +8,7 @@ data class PodcastResponse(
         val collectionName: String,
         val feedUrl: String,
         val artworkUrl100: String,
+        val artworkUrl600: String,
         val releaseDate: String
     )
 }

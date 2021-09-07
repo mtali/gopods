@@ -105,7 +105,7 @@ class NotificationManager(
     }
 }
 
-const val NOTIFICATION_LARGE_ICON_SIZE = 80
+const val NOTIFICATION_LARGE_ICON_SIZE = 600
 private val glideOptions = RequestOptions()
     .fallback(R.drawable.album_art)
     .diskCacheStrategy(DiskCacheStrategy.DATA)

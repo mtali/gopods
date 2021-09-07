@@ -14,6 +14,7 @@ import com.colisa.podplay.adapters.PodcastsListAdapter
 import com.colisa.podplay.extensions.handleViewVisibility
 import com.colisa.podplay.ui.GoViewModel
 import com.colisa.podplay.ui.NowPlayingViewModel
+import com.google.android.material.imageview.ShapeableImageView
 
 
 @BindingAdapter("app:imageUrl")
@@ -81,4 +82,18 @@ fun setPlayPauseSrc(view: ImageButton, isPlaying: Boolean?) {
     } else {
         view.setImageResource(R.drawable.ic_play)
     }
+}
+
+@BindingAdapter("app:panelCoverArt")
+fun setCover(view: ShapeableImageView, episode: NowPlayingViewModel.NowPlayingEpisode?) {
+    if (episode == null) {
+        Glide.with(view)
+            .load(R.drawable.album_art)
+            .into(view)
+    } else {
+        Glide.with(view)
+            .load(episode.artUrl600)
+            .into(view)
+    }
+
 }

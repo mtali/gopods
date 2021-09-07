@@ -147,10 +147,11 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     private fun PodcastResponse.toIPodcasts(): List<IPodcast> {
         return results.map {
             IPodcast(
-                it.collectionName,
-                DateUtils.jsonDateToShortDate(it.releaseDate),
-                it.artworkUrl100,
-                it.feedUrl
+                name = it.collectionName,
+                lastUpdated = DateUtils.jsonDateToShortDate(it.releaseDate),
+                imageUrl = it.artworkUrl100,
+                imageUrl600 = it.artworkUrl600,
+                feedUrl = it.feedUrl,
             )
         }
     }
@@ -187,6 +188,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         val url = _activeIPodcast.value?.feedUrl ?: return
         loadLocalOrLivePodcast(url) { podcast ->
             podcast.imageUrl = activeIPodcast.value?.imageUrl ?: ""
+            podcast.imageUrl600 = activeIPodcast.value?.imageUrl600 ?: ""
             activePodcast = podcast
             _rPodcastFeed.value = podcast.toRPodcastMainSafe()
         }
@@ -222,12 +224,13 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun Podcast.toRPodcast(): RPodcast {
         return RPodcast(
-            id != null,
-            htmlToSpannable(feedTitle).toString(),
-            feedUrl,
-            htmlToSpannable(feedDescription).toString(),
-            imageUrl,
-            episodes.toREpisodes()
+            subscribed = (id != null),
+            feedTitle = htmlToSpannable(feedTitle).toString(),
+            feedUrl = feedUrl,
+            feedDesc = htmlToSpannable(feedDescription).toString(),
+            imageUrl = imageUrl,
+            imageUrl600 = imageUrl600,
+            episodes = episodes.toREpisodes()
         )
     }
 
@@ -238,10 +241,11 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun Podcast.toIPodcast(): IPodcast {
         return IPodcast(
-            feedTitle,
-            DateUtils.dateToShortDate(lastUpdated),
-            imageUrl,
-            feedUrl
+            name = feedTitle,
+            lastUpdated = DateUtils.dateToShortDate(lastUpdated),
+            imageUrl = imageUrl,
+            imageUrl600 = imageUrl600,
+            feedUrl = feedUrl
         )
     }
 
@@ -290,6 +294,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         var name: String? = "",
         var lastUpdated: String? = "",
         var imageUrl: String? = "",
+        var imageUrl600: String? = "",
         var feedUrl: String? = ""
     )
 
@@ -299,6 +304,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         var feedUrl: String? = "",
         var feedDesc: String? = "",
         var imageUrl: String? = "",
+        var imageUrl600: String? = "",
         var episodes: List<REpisode>
     )
 

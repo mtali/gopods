@@ -33,7 +33,7 @@ class PodcastRepo(
         } else {
             try {
                 val r = feedService.getFeed(feedUrl)
-                emit(Result.OK(rssResponseToPodcast(feedUrl, "", r)))
+                emit(Result.OK(rssResponseToPodcast(feedUrl, "", "", r)))
             } catch (e: Throwable) {
                 emit(Result.Error(e))
             }
@@ -59,7 +59,12 @@ class PodcastRepo(
         try {
             val res = feedService.getFeed(localPodcast.feedUrl)
             val remotePodcast =
-                rssResponseToPodcast(localPodcast.feedUrl, localPodcast.imageUrl, res)
+                rssResponseToPodcast(
+                    localPodcast.feedUrl,
+                    localPodcast.imageUrl,
+                    localPodcast.imageUrl600,
+                    res
+                )
             remotePodcast?.let {
                 val localEpisode = podcastDao.getEpisodes(localPodcast.id!!)
                 val newEpisodes = remotePodcast.episodes.filter { episode ->
@@ -130,18 +135,20 @@ class PodcastRepo(
     private fun rssResponseToPodcast(
         feedUrl: String,
         imageUrl: String,
+        imageUrl600: String,
         rssResponse: RssFeedResponse
     ): Podcast? {
         val items = rssResponse.episodes ?: return null
         val description =
             if (rssResponse.description == "") rssResponse.summary else rssResponse.description
         return Podcast(
-            null,
-            feedUrl,
-            rssResponse.title,
-            description,
-            imageUrl,
-            rssResponse.lastUpdated,
+            id = null,
+            feedUrl = feedUrl,
+            feedTitle = rssResponse.title,
+            feedDescription = description,
+            imageUrl = imageUrl,
+            imageUrl600 = imageUrl600,
+            lastUpdated = rssResponse.lastUpdated,
             episodes = rssItemsToEpisodes(items)
         )
     }

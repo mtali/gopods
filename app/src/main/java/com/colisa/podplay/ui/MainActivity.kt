@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     // Binding classed
     private var binding: ActivityMainBinding? = null
     private var playerControlsPanelBinding: PlayerControlsPanelBinding? = null
-    private var nowPlayingBinding: NowPlayingBinding? = null
+    private var npBinding: NowPlayingBinding? = null
 
     // View model
     private val goViewModel: GoViewModel by viewModels()
@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             bundle.apply {
                 putString(MediaMetadataCompat.METADATA_KEY_TITLE, np.title)
                 putString(MediaMetadataCompat.METADATA_KEY_ARTIST, np.podcastTitle)
-                putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, np.artUrl)
+                putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, np.artUrl600)
             }
             controller.transportControls.playFromUri(Uri.parse(np.mediaUrl), bundle)
         }
@@ -178,7 +178,6 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             if (url != null) {
                 goViewModel.setActivePodcast(url)
             }
-
         }
     }
 
@@ -195,6 +194,15 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     private fun openNowPlaying() {
         playingDialog = MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
             customView(R.layout.now_playing)
+            npBinding = NowPlayingBinding.bind(getCustomView())
+            npBinding?.let { bn ->
+                bn.lifecycleOwner = this@MainActivity
+                bn.npViewModel = npViewModel
+                bn.npPlay.setOnClickListener { togglePlayPause() }
+                bn.npFastForward.setOnClickListener { }
+                bn.npFastForward.setOnClickListener { }
+            }
+
             if (VersionUtils.isOreoMR1() && !ThemeUtils.isDeviceLand(resources)) {
                 edgeToEdge {
                     view.fit { Edge.Bottom }
@@ -225,6 +233,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         super.onDestroy()
         binding = null
         playerControlsPanelBinding = null
+        npBinding = null
     }
 
     override fun onSubscribe() {

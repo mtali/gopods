@@ -4,6 +4,9 @@
 
     <data>
 
+        <variable
+            name="npViewModel"
+            type="com.colisa.podplay.ui.NowPlayingViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -21,7 +24,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:shapeAppearanceOverlay="@style/ImageView.Cover"
-            app:srcCompat="@drawable/album_art" />
+            app:panelCoverArt="@{npViewModel.recentEpisode}" />
 
         <TextView
             android:id="@+id/textView"
@@ -123,7 +126,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-            app:srcCompat="@drawable/ic_play" />
+            app:setPlayPauseSrc="@{npViewModel.isPlaying}" />
 
         <ImageButton
             android:id="@+id/np_fast_forward"

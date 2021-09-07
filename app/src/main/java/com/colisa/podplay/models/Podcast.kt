@@ -12,6 +12,7 @@ data class Podcast(
     var feedTitle: String = "",
     var feedDescription: String = "",
     var imageUrl: String = "",
+    var imageUrl600: String = "",
     var lastUpdated: Date = Date(),
     @Ignore var episodes: List<Episode> = listOf()
 )
