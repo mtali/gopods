@@ -32,7 +32,7 @@
             android:layout_marginEnd="16dp"
             android:contentDescription="@string/podcast_image"
             android:scaleType="fitXY"
-            app:imageUrl="@{podcast.imageUrl}"
+            app:imageUrl="@{podcast}"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

@@ -18,10 +18,11 @@ import com.google.android.material.imageview.ShapeableImageView
 
 
 @BindingAdapter("app:imageUrl")
-fun setImageUrl(view: ImageView, url: String?) {
-    url?.let {
+fun setImageUrl(view: ImageView, podcast: GoViewModel.IPodcast?) {
+    podcast?.let {
         Glide.with(view)
-            .load(url)
+            .load(podcast.imageUrl600)
+            .thumbnail(Glide.with(view).load(podcast.imageUrl))
             .into(view)
     }
 }

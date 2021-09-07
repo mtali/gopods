@@ -64,7 +64,7 @@
                             android:layout_gravity="center_vertical"
                             android:contentDescription="@string/podcast_cover"
                             android:scaleType="centerCrop"
-                            app:imageUrl="@{goViewModel.activeIPodcast.imageUrl600}"
+                            app:imageUrl="@{goViewModel.activeIPodcast}"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
                             app:shapeAppearanceOverlay="@style/ImageView.Cover"
