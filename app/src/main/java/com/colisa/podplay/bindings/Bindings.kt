@@ -16,14 +16,24 @@ import com.colisa.podplay.ui.GoViewModel
 import com.colisa.podplay.ui.NowPlayingViewModel
 import com.google.android.material.imageview.ShapeableImageView
 
-
-@BindingAdapter("app:imageUrl")
-fun setImageUrl(view: ImageView, podcast: GoViewModel.IPodcast?) {
-    podcast?.let {
-        Glide.with(view)
-            .load(podcast.imageUrl600)
-            .thumbnail(Glide.with(view).load(podcast.imageUrl))
-            .into(view)
+/**
+ * This adapter makes sure to load large images only when required,
+ */
+@BindingAdapter("app:imageUrl", "app:isLarge")
+fun setImageUrl(view: ImageView, podcast: GoViewModel.IPodcast?, isLarge: Boolean?) {
+    podcast?.let { ps ->
+        isLarge?.let { lg ->
+            if (lg) {
+                Glide.with(view)
+                    .load(ps.imageUrl600)
+                    .thumbnail(Glide.with(view).load(podcast.imageUrl))
+                    .into(view)
+            } else {
+                Glide.with(view)
+                    .load(ps.imageUrl)
+                    .into(view)
+            }
+        }
     }
 }
 
