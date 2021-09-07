@@ -25,4 +25,5 @@
     <color name="dialogsBackground">#212121</color>
     <color name="widgetsColor">#fafafa</color>
     <color name="systemBarsColor">#313131</color>
+    <color name="playerControlColor">#212121</color>
 </resources>

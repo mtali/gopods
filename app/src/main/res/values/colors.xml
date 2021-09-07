@@ -46,5 +46,6 @@
     <color name="dialogsBackground">@color/windowBackground</color>
     <color name="widgetsColor">#212121</color>
     <color name="systemBarsColor">#bfbfbf</color>
+    <color name="playerControlColor">#F3F3F3</color>
 
 </resources>
