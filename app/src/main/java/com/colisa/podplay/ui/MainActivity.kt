@@ -29,6 +29,7 @@ import com.colisa.podplay.databinding.NowPlayingBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
 import com.colisa.podplay.extensions.*
 import com.colisa.podplay.fragments.OnPodcastDetailsListener
+import com.colisa.podplay.goPreferences
 import com.colisa.podplay.player.GoPlayerService
 import com.colisa.podplay.util.EventObserver
 import com.colisa.podplay.util.ThemeUtils
@@ -199,8 +200,8 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
                 bn.lifecycleOwner = this@MainActivity
                 bn.npViewModel = npViewModel
                 bn.npPlay.setOnClickListener { togglePlayPause() }
-                bn.npFastForward.setOnClickListener { }
-                bn.npFastForward.setOnClickListener { }
+                bn.npFastForward.setOnClickListener { fastSeek(true) }
+                bn.npFastRewind.setOnClickListener { fastSeek(false) }
             }
 
             if (VersionUtils.isOreoMR1() && !ThemeUtils.isDeviceLand(resources)) {
@@ -302,6 +303,21 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).apply {
             setGravity(Gravity.CENTER, 0, 0)
             show()
+        }
+    }
+
+
+    private fun fastSeek(isForward: Boolean) = onMediaController {
+        val step = goPreferences.fastSeekingStep * 1000
+        val isPrepared = it.playbackState.isPrepared
+        if (isPrepared) {
+            var newPosition = it.playbackState.position
+            if (isForward) {
+                newPosition += step
+            } else {
+                newPosition -= step
+            }
+            it.transportControls.seekTo(newPosition)
         }
     }
 

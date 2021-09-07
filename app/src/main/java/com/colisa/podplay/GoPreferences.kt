@@ -16,6 +16,9 @@ class GoPreferences(context: Context) {
     private val prefsAccent = context.getString(R.string.accent_pref)
 
     private val prefsRecentEpisode = context.getString(R.string.pref_recent_episode)
+
+    private val prefsFastSeek = context.getString(R.string.pref_fast_seeking)
+
     var theme
         get() = mPrefs.getString(prefsTheme, prefsThemeDef)
         set(value) = mPrefs.edit { putString(prefsTheme, value) }
@@ -27,6 +30,10 @@ class GoPreferences(context: Context) {
     var latestEpisode: NowPlayingEpisode?
         get() = getObjectForClass(prefsRecentEpisode, NowPlayingEpisode::class.java)
         set(value) = putObjectForClass(prefsRecentEpisode, value, NowPlayingEpisode::class.java)
+
+    var fastSeekingStep: Int
+        get() = mPrefs.getInt(prefsFastSeek, 5)
+        set(value) = mPrefs.edit { putInt(prefsFastSeek, value) }
 
 
     // Saves object into the Preferences using Moshi
