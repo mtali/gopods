@@ -94,12 +94,18 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
     }
 
+
     private fun setupControls() {
         playerControlsPanelBinding?.let {
             it.playPauseButton.setOnClickListener {
                 togglePlayPause()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updatePlayState()
     }
 
 
@@ -132,16 +138,15 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
      * We don't check conditions here
      */
     private fun startPlaying(np: NowPlayingViewModel.NowPlayingEpisode) {
-        val controller = MediaControllerCompat.getMediaController(this)
-        npViewModel.saveRecentEpisode(np)
-        controller?.let {
+        onMediaController { controller ->
+            npViewModel.saveRecentEpisode(np)
             val bundle = Bundle()
             bundle.apply {
                 putString(MediaMetadataCompat.METADATA_KEY_TITLE, np.title)
                 putString(MediaMetadataCompat.METADATA_KEY_ARTIST, np.podcastTitle)
                 putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, np.artUrl)
             }
-            it.transportControls.playFromUri(Uri.parse(np.mediaUrl), bundle)
+            controller.transportControls.playFromUri(Uri.parse(np.mediaUrl), bundle)
         }
     }
 
@@ -149,13 +154,18 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         super.onStart()
         if (!mediaBrowser.isConnected) {
             mediaBrowser.connect()
+        } else {
+            onMediaController { controller ->
+                mediaControllerCallback?.let {
+                    controller.registerCallback(it)
+                }
+            }
         }
     }
 
     override fun onStop() {
         super.onStop()
-        val controller = MediaControllerCompat.getMediaController(this)
-        if (controller != null) {
+        onMediaController { controller ->
             mediaControllerCallback?.let {
                 controller.unregisterCallback(it)
             }
@@ -255,9 +265,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     }
 
     private fun togglePlayPause() {
-        val controller = MediaControllerCompat.getMediaController(this)
-        if (controller != null) {
-
+        onMediaController { controller ->
             if (controller.playbackState != null) {
                 val state = controller.playbackState
                 when {
@@ -270,6 +278,14 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             } else {
                 npViewModel.recentEpisode.value?.let { startPlaying(it) }
             }
+        }
+    }
+
+    private fun updatePlayState() {
+        onMediaController {
+            val isPlaying = it.playbackState.isPlaying
+            Timber.d("Update playback state {'playing': $isPlaying, 'service': ${mediaBrowser.isConnected} }")
+            npViewModel.setIsPlaying(isPlaying)
         }
     }
 
@@ -310,8 +326,8 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
+            updatePlayState()
             state?.let {
-                npViewModel.setIsPlaying(it.isPlaying)
                 when {
                     it.isError -> quickError("Error playing episode!")
                 }

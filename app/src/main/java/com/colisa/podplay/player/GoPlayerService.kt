@@ -54,7 +54,7 @@ class GoPlayerService : MediaBrowserServiceCompat() {
         notificationManager =
             NotificationManager(this, mediaSession.sessionToken, PlayerNotificationListener())
 
-        // notificationManager.showNotificationForPlayer(exoPlayer)
+        notificationManager.showNotificationForPlayer(exoPlayer)
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -149,7 +149,7 @@ class GoPlayerService : MediaBrowserServiceCompat() {
 
 
         override fun onPlayerError(error: PlaybackException) {
-            Timber.d("onPlayerError: ${error.message}")
+            Timber.e("onPlayerError: ${error.message}")
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
