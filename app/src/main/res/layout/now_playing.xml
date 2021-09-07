@@ -23,8 +23,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearanceOverlay="@style/ImageView.Cover"
-            app:panelCoverArt="@{npViewModel.recentEpisode}" />
+            app:panelCoverArt="@{npViewModel.recentEpisode}"
+            app:shapeAppearanceOverlay="@style/ImageView.Cover" />
 
         <TextView
             android:id="@+id/textView"
@@ -36,7 +36,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:singleLine="true"
-            android:text="Full-Time Open Source"
+            android:text="@{npViewModel.recentEpisode.title}"
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -47,7 +47,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Buferring ..."
+            android:gravity="center"
+            android:text="@{npViewModel.podcastTitleOrBuffering}"
             app:layout_constraintEnd_toEndOf="@+id/textView"
             app:layout_constraintStart_toStartOf="@+id/textView"
             app:layout_constraintTop_toBottomOf="@+id/textView" />
@@ -68,6 +69,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_marginStart="16dp"
+                android:text="@{npViewModel.formattedCurrentTime}"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                 android:textColor="?android:attr/textColorSecondary" />
 
@@ -78,6 +80,7 @@
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
+                android:max="@{npViewModel.episodeDuration.intValue()}"
                 android:progressBackgroundTint="?attr/colorPrimary"
                 android:progressBackgroundTintMode="src_in"
                 android:splitTrack="false" />
@@ -88,6 +91,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_marginEnd="16dp"
+                android:text="@{npViewModel.formattedDuration}"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                 android:textColor="?android:attr/textColorSecondary" />
 

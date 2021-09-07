@@ -1,10 +1,9 @@
 package com.colisa.podplay.ui
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import android.support.v4.media.session.PlaybackStateCompat
+import android.text.format.DateUtils
+import androidx.lifecycle.*
 import com.colisa.podplay.goPreferences
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.launch
@@ -47,6 +46,30 @@ class NowPlayingViewModel(application: Application) : AndroidViewModel(applicati
     private val _isPlaying = MutableLiveData<Boolean>(false)
     var isPlaying: LiveData<Boolean> = _isPlaying
 
+    private val _episodeDuration = MutableLiveData<Long>()
+    val episodeDuration: LiveData<Long> = _episodeDuration
+
+    val formattedDuration: LiveData<String> = Transformations.map(_episodeDuration) {
+        DateUtils.formatElapsedTime(it / 1000)
+    }
+
+    private val _playbackState = MutableLiveData<Int>(PlaybackStateCompat.STATE_NONE)
+    val podcastTitleOrBuffering: LiveData<String> = _playbackState.map { state ->
+        if (state == PlaybackStateCompat.STATE_BUFFERING) {
+            "Buffering ..."
+        } else {
+            val title = recentEpisode.value?.podcastTitle
+            title ?: "Loading ..."
+
+        }
+    }
+
+    private var _currentTime = MutableLiveData<Long>(0)
+    val formattedCurrentTime: LiveData<String> = _currentTime.map {
+        DateUtils.formatElapsedTime(it)
+    }
+
+
     init {
         loadRecentEpisode()
     }
@@ -67,6 +90,22 @@ class NowPlayingViewModel(application: Application) : AndroidViewModel(applicati
 
     fun setIsPlaying(playing: Boolean) {
         _isPlaying.value = playing
+    }
+
+    fun setEpisodeDuration(duration: Long) {
+        _episodeDuration.value = if (duration < 0) {
+            0
+        } else {
+            duration
+        }
+    }
+
+    fun setCurrentTime(time: Long) {
+        _currentTime.value = time
+    }
+
+    fun setPlayState(state: Int) {
+        _playbackState.value = state
     }
 
 

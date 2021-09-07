@@ -1,5 +1,6 @@
 package com.colisa.podplay.ui
 
+import android.animation.ValueAnimator
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
@@ -10,6 +11,8 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.Gravity
+import android.view.animation.LinearInterpolator
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +23,7 @@ import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
+import com.afollestad.materialdialogs.callbacks.onDismiss
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
@@ -66,6 +70,10 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
 
     private var mediaControllerCallback: MediaControllerCallback? = null
 
+    private var draggingScrubber: Boolean = false
+    private var progressAnimator: ValueAnimator? = null
+    private var episodeDuration: Long = 0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,6 +115,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     override fun onResume() {
         super.onResume()
         updatePlayState()
+        updateControlsFromController()
     }
 
 
@@ -171,6 +180,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
                 controller.unregisterCallback(it)
             }
         }
+
     }
 
     private fun handleIntent(intent: Intent?) {
@@ -213,8 +223,15 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
                 playingDialog.setPeekHeight(height)
             }
 
-            onShow {
+            setupSeekBarProgressListener()
 
+            onShow {
+                updateControlsFromController()
+            }
+
+            onDismiss {
+                npBinding?.npSeekBar?.setOnSeekBarChangeListener(null)
+                progressAnimator?.cancel()
             }
         }
     }
@@ -321,6 +338,77 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         }
     }
 
+    private fun updateControlsFromMetadata(metadata: MediaMetadataCompat) {
+        episodeDuration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
+        npViewModel.setEpisodeDuration(episodeDuration)
+    }
+
+    private fun setupSeekBarProgressListener() {
+
+        npBinding!!.npSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                npViewModel.setCurrentTime((progress / 1000).toLong())
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+                draggingScrubber = true
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                draggingScrubber = false
+                onMediaController {
+                    if (it.playbackState != null) {
+                        it.transportControls.seekTo(seekBar.progress.toLong())
+                    } else {
+                        seekBar.progress = 0
+                    }
+                }
+            }
+        })
+    }
+
+    private fun animateScrubber(progress: Int, speed: Float) {
+        val timeRemaining = ((episodeDuration - progress) / speed).toInt()
+        if (timeRemaining < 0)
+            return
+        progressAnimator = ValueAnimator.ofInt(progress, episodeDuration.toInt())
+        progressAnimator?.let { animator ->
+            animator.duration = timeRemaining.toLong()
+            animator.interpolator = LinearInterpolator()
+            animator.addUpdateListener {
+                if (draggingScrubber) {
+                    animator.cancel()
+                } else {
+                    npBinding?.let {
+                        it.npSeekBar.progress = animator.animatedValue as Int
+                    }
+                }
+            }
+            animator.start()
+        }
+    }
+
+    private fun handleStateChange(state: Int, position: Long, speed: Float) {
+        progressAnimator?.let {
+            it.cancel()
+            progressAnimator = null
+        }
+        val progress = position.toInt()
+        npBinding?.let { it.npSeekBar.progress = progress }
+        if (state == PlaybackStateCompat.STATE_PLAYING) {
+            animateScrubber(progress, speed)
+        }
+    }
+
+    private fun updateControlsFromController() = onMediaController { controller ->
+        val metadata = controller.metadata
+        if (metadata != null) {
+            val state = controller.playbackState
+            handleStateChange(state.state, state.position, state.playbackSpeed)
+            updateControlsFromMetadata(metadata)
+        }
+    }
+
 
     /**
      * This receive callbacks for service connection [MediaBrowserServiceCompat]
@@ -330,6 +418,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             super.onConnected()
             Timber.d("onConnected")
             registerMediaController(mediaBrowser.sessionToken)
+            updateControlsFromController()
         }
 
         override fun onConnectionSuspended() {
@@ -346,18 +435,21 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
     inner class MediaControllerCallback : MediaControllerCompat.Callback() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
+            metadata?.let {
+                updateControlsFromMetadata(it)
+            }
             Timber.d("onMetadataChanged: ${metadata?.mediaMetadata}")
         }
 
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            super.onPlaybackStateChanged(state)
+        override fun onPlaybackStateChanged(playState: PlaybackStateCompat?) {
+            val state = playState ?: return
+            npViewModel.setPlayState(state.state)
+            handleStateChange(state.state, state.position, state.playbackSpeed)
             updatePlayState()
-            state?.let {
-                when {
-                    it.isError -> quickError("Error playing episode!")
-                }
+            when {
+                state.isError -> quickError("Error playing episode!")
             }
-            Timber.d("onPlaybackStateChanged() = ${state?.stateName}")
+            Timber.d("onPlaybackStateChanged() = ${state.stateName}")
         }
 
         override fun onSessionEvent(event: String?, extras: Bundle?) {

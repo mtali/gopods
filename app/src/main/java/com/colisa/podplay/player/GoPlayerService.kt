@@ -13,6 +13,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.content.ContextCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.Player.STATE_READY
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
@@ -45,6 +46,8 @@ class GoPlayerService : MediaBrowserServiceCompat() {
     private lateinit var mediaSessionConnector: MediaSessionConnector
 
     private var isForeground = false
+
+    private var durationSet: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
@@ -127,7 +130,16 @@ class GoPlayerService : MediaBrowserServiceCompat() {
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             onPlayerStateOrPlayWhenReady(exoPlayer.playWhenReady, playbackState)
+            if (playbackState == STATE_READY && !durationSet) {
+                mediaSession.setMetadata(
+                    MediaMetadataCompat.Builder()
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, exoPlayer.duration)
+                        .build()
+                )
+                durationSet = true
+            }
         }
+
 
         private fun onPlayerStateOrPlayWhenReady(playWhenReady: Boolean, state: Int) {
             when (state) {
@@ -155,6 +167,7 @@ class GoPlayerService : MediaBrowserServiceCompat() {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: ${mediaMetadata.mediaUri}")
         }
+
     }
 
     private inner class GoPlaybackPrepare : MediaSessionConnector.PlaybackPreparer {
@@ -182,12 +195,12 @@ class GoPlayerService : MediaBrowserServiceCompat() {
 
         override fun onPrepareFromUri(uri: Uri, whenReady: Boolean, extras: Bundle?) {
             val item = extractMediaItem(uri, extras)
+            durationSet = false
             exoPlayer.apply {
                 setMediaItem(item)
                 prepare()
                 playWhenReady = whenReady
             }
-
         }
 
         private fun extractMediaItem(uri: Uri, extras: Bundle?): MediaItem {
