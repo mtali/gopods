@@ -1,10 +1,12 @@
 package com.colisa.podplay.bindings
 
 import android.text.TextUtils
+import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -106,5 +108,9 @@ fun setCover(view: ShapeableImageView, episode: NowPlayingViewModel.NowPlayingEp
             .load(episode.artUrl600)
             .into(view)
     }
+}
 
+@BindingAdapter("app:visibility")
+fun setVisibility(view: View, isVisible: Boolean?) {
+    view.isVisible = isVisible == true
 }

@@ -59,23 +59,31 @@
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
                     android:orientation="vertical"
-                    android:visibility="invisible">
-
-                    <ImageView
-                        android:id="@+id/no_podcasts_icon"
-                        android:layout_width="96dp"
-                        android:layout_height="96dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="@string/no_podcasts_image_content_description"
-                        android:src="@drawable/ic_not_interested"
-                        app:tint="@color/widgetsColor" />
+                    app:visibility="@{goViewModel.noSubscribedPodcasts}">
 
                     <TextView
-                        android:id="@+id/no_tasks_text"
+                        android:id="@+id/no_greetings"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="@string/not_subscribed_to_any" />
+                        android:text="@string/no_podcasts_greeting" />
+
+                    <TextView
+                        android:id="@+id/no_message"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/no_podcasts_message" />
+
+                    <TextView
+                        android:id="@+id/no_action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/no_podcasts_action"
+                        app:drawableStartCompat="@drawable/ic_search" />
 
                 </LinearLayout>
 

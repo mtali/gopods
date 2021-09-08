@@ -50,4 +50,9 @@
     <string name="unknown_year">N/A</string>
     <string name="pref_fast_seeking">pref_fast_seeking</string>
 
+    <!--No podcast available-->
+    <string name="no_podcasts_greeting">Hi there,</string>
+    <string name="no_podcasts_message">You haven\'t subscribed to any podcast</string>
+    <string name="no_podcasts_action">Start a search</string>
+
 </resources>

@@ -99,6 +99,11 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     private val _playEpisodeEvent = MutableLiveData<Event<REpisode>>()
     val playEpisodeEvent: LiveData<Event<REpisode>> = _playEpisodeEvent
 
+    // No subscribed podcast
+    val noSubscribedPodcasts = podcasts.map {
+        it.isNullOrEmpty()
+    }
+
 
     private fun showLive() {
         state.value = DisplayState.LIVE
