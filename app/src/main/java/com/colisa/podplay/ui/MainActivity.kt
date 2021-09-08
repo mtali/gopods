@@ -44,7 +44,7 @@ import de.halfbit.edgetoedge.edgeToEdge
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
-class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
+class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInterface {
 
     // Binding classed
     private var binding: ActivityMainBinding? = null
@@ -482,6 +482,10 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             super.onSessionEvent(event, extras)
             Timber.d("onSessionEvent: $event")
         }
+    }
+
+    override fun onCloseActivity() {
+        finishAndRemoveTask()
     }
 
 

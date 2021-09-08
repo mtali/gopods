@@ -1,5 +1,6 @@
 package com.colisa.podplay.fragments
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -16,6 +17,7 @@ import com.colisa.podplay.adapters.PodcastsListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastsBinding
 import com.colisa.podplay.extensions.hideKeyboard
 import com.colisa.podplay.ui.GoViewModel
+import com.colisa.podplay.ui.UIControlInterface
 import com.colisa.podplay.util.EventObserver
 import timber.log.Timber
 
@@ -23,6 +25,8 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
 
     private var binding: FragmentPodcastsBinding? = null
     private val goViewModel: GoViewModel by activityViewModels()
+
+    private lateinit var uiControlInterface: UIControlInterface
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,10 +52,22 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
         }
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        try {
+            uiControlInterface = activity as UIControlInterface
+        } catch (e: ClassCastException) {
+            e.printStackTrace()
+        }
+    }
+
     private fun finishSetup() {
         binding?.searchToolbar?.let { stb ->
             stb.title = getString(R.string.podcasts)
             stb.inflateMenu(R.menu.menu_search)
+            stb.setNavigationOnClickListener {
+                uiControlInterface.onCloseActivity()
+            }
             val searchItem = stb.menu.findItem(R.id.action_main_search)
             val searchView = searchItem.actionView as SearchView
             searchView.setOnQueryTextListener(this)
@@ -68,7 +84,6 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
 
         }
     }
-
 
 
     override fun onDestroyView() {
