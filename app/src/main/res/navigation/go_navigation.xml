@@ -12,7 +12,9 @@
         tools:layout="@layout/fragment_podcasts">
         <action
             android:id="@+id/action_podcastsFragment_to_podcastDetailsFragment"
-            app:destination="@id/podcastDetailsFragment" />
+            app:destination="@id/podcastDetailsFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
     </fragment>
 
     <fragment
