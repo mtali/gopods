@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GoPods</string>
+
     <string name="podcast_image">Podcast image</string>
     <string name="podcast">Podcast</string>
     <string name="podcasts">Podcasts</string>
@@ -11,51 +11,24 @@
     <string name="podcast_cover">Podcast cover</string>
     <string name="episode_notification_title">New episodes</string>
     <string name="episode_notification_text">%1$d new episode(s) for %2$s</string>
-
-    <!--NowPlaying notification-->
     <string name="np_notification_channel">Now Playing</string>
     <string name="np_notification_channel_description">Shows what music is currently playing in GoPods</string>
-
-
-    <!--Error messages-->
     <string name="error_media_not_found">Could not locate requested media.</string>
     <string name="generic_error">The application has encountered an unexpected error.</string>
-
-
-    <!--TODO: Move to don't translate-->
-    <string name="theme_pref">theme_pref</string>
-    <string name="theme_pref_auto">theme_pref_auto</string>
-    <string name="accent_pref">accent_theme_pref</string>
-    <string name="pref_recent_episode">pref_restore_latest_episode</string>
-
-
-    <string name="version_name">1.0.0</string>
     <string name="content_play">Play/pause</string>
     <string name="queue">Queue</string>
     <string name="favorites">Favorite episodes</string>
     <string name="search">Search</string>
     <string name="about">About</string>
-    <string name="no_podcasts_image_content_description">No podcasts</string>
-    <string name="not_subscribed_to_any">No podcast subscriptions! Search topic of your interest</string>
-    <string name="covers_pref_title">Now playing cover</string>
-    <string name="content_playback_speed">Playback speed</string>
-    <string name="favorites_save_time">Save time</string>
-    <string name="equalizer">Equalizer</string>
-    <string name="favorite_add">Add</string>
-    <string name="content_repeat">Repeat</string>
-    <string name="fast_seeking_pref_title">N/A</string>
-    <string name="content_skip_prev">N/A</string>
-    <string name="content_skip_next">N/A</string>
-    <string name="precise_volume_pref_title">N/A</string>
-    <string name="unknown_year">N/A</string>
-    <string name="pref_fast_seeking">pref_fast_seeking</string>
-
-    <!-- No podcast available -->
+    <string name="content_skip_prev">Skip previous</string>
+    <string name="content_skip_next">Skip next</string>
     <string name="no_podcasts_greeting">Hi there,</string>
     <string name="no_podcasts_message">You haven\'t subscribed to any podcast</string>
     <string name="no_podcasts_action">Start a search</string>
-
-    <!--Player error -->
     <string name="error_bad_episode">Play an episode first.</string>
+    <string name="content_cover">Now playing cover</string>
+    <string name="content_fast_rewind">Fast rewind</string>
+    <string name="content_fast_forward">Fast forward</string>
+    <string name="settings">Settings</string>
 
 </resources>

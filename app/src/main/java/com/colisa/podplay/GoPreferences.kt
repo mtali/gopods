@@ -11,9 +11,9 @@ class GoPreferences(context: Context) {
 
     private val moshi = Moshi.Builder().build()
 
-    private val prefsTheme = context.getString(R.string.theme_pref)
-    private val prefsThemeDef = context.getString(R.string.theme_pref_auto)
-    private val prefsAccent = context.getString(R.string.accent_pref)
+    private val prefsTheme = context.getString(R.string.pref_theme)
+    private val prefsThemeDef = context.getString(R.string.pref_theme_auto)
+    private val prefsAccent = context.getString(R.string.pref_accent)
 
     private val prefsRecentEpisode = context.getString(R.string.pref_recent_episode)
 
