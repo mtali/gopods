@@ -15,10 +15,8 @@ import com.colisa.podplay.R
 import com.colisa.podplay.adapters.PodcastsListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastsBinding
 import com.colisa.podplay.extensions.hideKeyboard
-import com.colisa.podplay.extensions.setupSnackbar
 import com.colisa.podplay.ui.GoViewModel
 import com.colisa.podplay.util.EventObserver
-import com.google.android.material.snackbar.Snackbar
 import timber.log.Timber
 
 class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQueryTextListener {
@@ -39,7 +37,6 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
         super.onViewCreated(view, savedInstanceState)
         setupBinding()
         finishSetup()
-        setupSnackbar()
         setupListAdapter()
         setupNavigation()
     }
@@ -72,9 +69,6 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
         }
     }
 
-    private fun setupSnackbar() {
-        view?.setupSnackbar(viewLifecycleOwner, goViewModel.snackbar, Snackbar.LENGTH_SHORT)
-    }
 
 
     override fun onDestroyView() {

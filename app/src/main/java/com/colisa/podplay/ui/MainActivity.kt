@@ -79,18 +79,25 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         super.onCreate(savedInstanceState)
         setTheme(ThemeUtils.getAccentedTheme().first)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
+        // Toast messages
+        binding!!.root.setupMessagingToast(this, goViewModel.snackbar)
+
+        // Other bindings
         playerControlsPanelBinding = binding!!.playerControls
         setupBinding()
 
+        // Support edge to edge
         if (VersionUtils.isOreoMR1()) {
             edgeToEdge {
                 binding!!.root.fit { Edge.Top + Edge.Bottom }
             }
         }
 
+        // Simple reveal animation
         synchronized(Any()) {
             binding!!.mainView.animate().apply {
-                duration = 750
+                duration = 300
                 alpha(1.0F)
             }
         }

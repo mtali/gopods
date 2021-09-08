@@ -1,16 +1,15 @@
 package com.colisa.podplay.extensions
 
 import android.content.Context
+import android.view.Gravity
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
-import androidx.core.content.ContextCompat
+import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import com.colisa.podplay.R
 import com.colisa.podplay.util.Event
 import com.colisa.podplay.util.EventObserver
-import com.google.android.material.snackbar.Snackbar
 
 
 inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
@@ -24,22 +23,16 @@ inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
     })
 }
 
-fun View.showSnackbar(text: String, time: Int) {
-    val snack = Snackbar.make(this, text, time)
-    snack.setBackgroundTint(ContextCompat.getColor(context, R.color.green_300))
-    snack.show()
-}
 
-
-fun View.setupSnackbar(
-    lifecycleOwner: LifecycleOwner,
-    snackbarEvent: LiveData<Event<String>>,
-    time: Int
-) {
-    snackbarEvent.observe(lifecycleOwner, EventObserver {
-        showSnackbar(it, time)
+fun View.setupMessagingToast(owner: LifecycleOwner, event: LiveData<Event<String>>) {
+    event.observe(owner, EventObserver {
+        Toast.makeText(this.context, it, Toast.LENGTH_LONG).apply {
+            setGravity(Gravity.CENTER, 0, 0)
+            show()
+        }
     })
 }
+
 
 fun View.hideKeyboard() {
     val input = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager

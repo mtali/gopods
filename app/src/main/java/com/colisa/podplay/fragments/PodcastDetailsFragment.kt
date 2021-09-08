@@ -12,9 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.colisa.podplay.R
 import com.colisa.podplay.adapters.EpisodeListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastDetailsBinding
-import com.colisa.podplay.extensions.setupSnackbar
 import com.colisa.podplay.ui.GoViewModel
-import com.google.android.material.snackbar.Snackbar
 import timber.log.Timber
 
 class PodcastDetailsFragment : Fragment() {
@@ -36,7 +34,6 @@ class PodcastDetailsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupBinding()
         finishSetup()
-        setupSnackbar()
         setupEpisodesListAdapter()
         setObservers()
         lifecycleScope.launchWhenStarted {
@@ -68,10 +65,6 @@ class PodcastDetailsFragment : Fragment() {
                 requireActivity().onBackPressed()
             }
         }
-    }
-
-    private fun setupSnackbar() {
-        view?.setupSnackbar(viewLifecycleOwner, goViewModel.snackbar, Snackbar.LENGTH_SHORT)
     }
 
     private fun setupEpisodesListAdapter() {
