@@ -100,17 +100,29 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         handleIntent(intent)
         setObservers()
         setupControls()
-
     }
 
 
     private fun setupControls() {
         playerControlsPanelBinding?.let {
             it.playPauseButton.setOnClickListener {
-                togglePlayPause()
+                checkIsPlayer {
+                    togglePlayPause()
+                }
             }
         }
     }
+
+    private fun checkIsPlayer(showError: Boolean = true, block: () -> Unit) {
+        if (goPreferences.latestEpisode == null) {
+            if (showError) {
+                quickMessage(R.string.error_bad_episode)
+            }
+        } else {
+            block.invoke()
+        }
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -196,7 +208,9 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         playerControlsPanelBinding?.let { playerBinding ->
             with(playerBinding.playingEpisodeContainer) {
                 setOnClickListener {
-                    openNowPlaying()
+                    checkIsPlayer {
+                        openNowPlaying()
+                    }
                 }
             }
         }
@@ -209,9 +223,9 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             npBinding?.let { bn ->
                 bn.lifecycleOwner = this@MainActivity
                 bn.npViewModel = npViewModel
-                bn.npPlay.setOnClickListener { togglePlayPause() }
-                bn.npFastForward.setOnClickListener { fastSeek(true) }
-                bn.npFastRewind.setOnClickListener { fastSeek(false) }
+                bn.npPlay.setOnClickListener { checkIsPlayer { togglePlayPause() } }
+                bn.npFastForward.setOnClickListener { checkIsPlayer { fastSeek(true) } }
+                bn.npFastRewind.setOnClickListener { checkIsPlayer { fastSeek(false) } }
             }
 
             if (VersionUtils.isOreoMR1() && !ThemeUtils.isDeviceLand(resources)) {
@@ -316,11 +330,16 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
         }
     }
 
-    private fun quickError(msg: String) {
+    private fun quickMessage(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).apply {
             setGravity(Gravity.CENTER, 0, 0)
             show()
         }
+    }
+
+    private fun quickMessage(resId: Int) {
+        val string = getString(resId)
+        quickMessage(string)
     }
 
 
@@ -447,7 +466,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener {
             handleStateChange(state.state, state.position, state.playbackSpeed)
             updatePlayState()
             when {
-                state.isError -> quickError("Error playing episode!")
+                state.isError -> quickMessage("Error playing episode!")
             }
             Timber.d("onPlaybackStateChanged() = ${state.stateName}")
         }
