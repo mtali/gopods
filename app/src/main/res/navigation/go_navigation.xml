@@ -13,8 +13,9 @@
         <action
             android:id="@+id/action_podcastsFragment_to_podcastDetailsFragment"
             app:destination="@id/podcastDetailsFragment"
-            app:enterAnim="@android:anim/slide_in_left"
-            app:popExitAnim="@android:anim/slide_out_right" />
+            app:enterAnim="@anim/slide_left"
+            app:exitAnim="@anim/wait_anim"
+            app:popExitAnim="@anim/slide_right" />
     </fragment>
 
     <fragment
