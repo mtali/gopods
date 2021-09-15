@@ -6,10 +6,10 @@ import androidx.lifecycle.*
 import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
+import com.colisa.podplay.network.Resource
 import com.colisa.podplay.network.Result
 import com.colisa.podplay.network.api.FeedService
 import com.colisa.podplay.network.api.ItunesService
-import com.colisa.podplay.network.models.PodcastResponse
 import com.colisa.podplay.repository.ItunesRepo
 import com.colisa.podplay.repository.PodcastRepo
 import com.colisa.podplay.repository.RealItunesRepo
@@ -21,6 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -41,7 +42,14 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     val spinner: LiveData<Boolean> = _spinner
 
     // Configurations
-    private val itunesRepo: ItunesRepo by lazy { RealItunesRepo(ItunesService.instance) }
+    private val db = GoDatabase.getInstance(application)
+    private val itunesRepo: ItunesRepo by lazy {
+        RealItunesRepo(
+            ItunesService.instance,
+            db.podcastDao(),
+            db
+        )
+    }
     private val podcastsRepo: PodcastRepo by lazy {
         PodcastRepo(
             FeedService.instance,
@@ -76,10 +84,8 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
 
     // Subscribed podcasts
     private var _subscribedIPodcast =
-        podcastsRepo.getSubscribedPodcasts().switchMap { list ->
-            liveData {
-                emit(list.toIPodcasts())
-            }
+        podcastsRepo.getPodcasts(subscribed = true).map {
+            it.toIPodcasts()
         }
 
     // Podcast
@@ -91,7 +97,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         if (state == DisplayState.LIVE) {
             _searchPodcasts.asFlow()
         } else {
-            _subscribedIPodcast.asFlow()
+            _subscribedIPodcast
         }
     }.asLiveData()
 
@@ -113,51 +119,51 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         state.value = DisplayState.SUBSCRIBED
     }
 
+    private fun spinner(state: Boolean) {
+        _spinner.value = state
+    }
+
+    private fun message(msg: String?) {
+        _snackbar.value = Event(msg ?: "Unexpected error")
+    }
+
     fun onSearchPodcast(term: String) {
-        if (term == query && searchJob?.isActive == true) return
+        // Prevent user perform same search while work is still on progress
+        // if (term == query && searchJob?.isActive == true) return
         query = term
+
         showLive()
+
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             itunesRepo.searchPodcasts(term)
                 .collect { result ->
                     when (result) {
-                        is Result.Loading -> {
-                            _spinner.value = true
-                        }
-                        is Result.Error -> {
-                            _spinner.value = false
-                            _snackbar.value = Event(result.exception.message ?: "Unknown error!")
-                        }
-                        is Result.OK -> {
-                            val data = result.data
-                            if (data == null || data.resultCount == 0) {
-                                _snackbar.value = Event("Empty response")
+                        is Resource.Loading -> {
+                            if (!result.data.isNullOrEmpty()) {
+                                _searchPodcasts.value = result.data.toIPodcasts()
+                                spinner(false)
                             } else {
-                                _searchPodcasts.value = data.toIPodcastsMainSafe()
+                                spinner(true)
                             }
-                            _spinner.value = false
+                        }
+
+                        is Resource.Error -> {
+                            spinner(false)
+                            message(result.error?.message)
+                        }
+
+                        is Resource.Success -> {
+                            if (result.data.isNullOrEmpty()) {
+                                message("Empty response")
+                            } else {
+                                _searchPodcasts.value = result.data.toIPodcasts()
+                            }
+                            spinner(false)
                         }
                     }
                 }
-        }
-    }
 
-
-    @AnyThread
-    suspend fun PodcastResponse.toIPodcastsMainSafe() = withContext(Dispatchers.Default) {
-        toIPodcasts()
-    }
-
-    private fun PodcastResponse.toIPodcasts(): List<IPodcast> {
-        return results.map {
-            IPodcast(
-                name = it.collectionName,
-                lastUpdated = DateUtils.jsonDateToShortDate(it.releaseDate),
-                imageUrl = it.artworkUrl100,
-                imageUrl600 = it.artworkUrl600,
-                feedUrl = it.feedUrl,
-            )
         }
     }
 
@@ -168,6 +174,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
                 .collect { result ->
                     when (result) {
                         is Result.Loading -> {
+
                             _spinner.value = true
                         }
                         is Result.Error -> {

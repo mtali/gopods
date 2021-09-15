@@ -4,21 +4,47 @@ import android.content.Context
 import androidx.room.*
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
+import com.colisa.podplay.models.PodcastSearchResult
+import timber.log.Timber
 import java.util.*
 
-class Converters {
+object Converters {
     @TypeConverter
+    @JvmStatic
     fun fromTimestamp(value: Long?): Date? {
         return if (value == null) null else Date(value)
     }
 
     @TypeConverter
+    @JvmStatic
     fun toTimeStamp(date: Date?): Long? {
         return date?.time
     }
+
+    @TypeConverter
+    @JvmStatic
+    fun stringToLongList(data: String?): List<Long>? {
+        return data?.let {
+            it.split(",").map { str ->
+                try {
+                    str.toLong()
+                } catch (e: NumberFormatException) {
+                    Timber.e(e, "Cannot convert $str to number")
+                    null
+                }
+            }
+        }?.filterNotNull()
+    }
+
+    @TypeConverter
+    @JvmStatic
+    fun longListToString(ints: List<Long>?): String? {
+        return ints?.joinToString(",")
+    }
+
 }
 
-@Database(entities = [Podcast::class, Episode::class], version = 1)
+@Database(entities = [Podcast::class, Episode::class, PodcastSearchResult::class], version = 1)
 @TypeConverters(Converters::class)
 abstract class GoDatabase : RoomDatabase() {
     abstract fun podcastDao(): PodcastDao

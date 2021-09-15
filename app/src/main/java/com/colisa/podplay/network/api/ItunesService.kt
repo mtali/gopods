@@ -11,6 +11,9 @@ interface ItunesService {
     @GET("/search?media=podcast")
     suspend fun searchItunesPodcast(@Query("term") term: String): Response<PodcastResponse>
 
+    @GET("/search?media=podcast")
+    suspend fun searchPodcasts(@Query("term") term: String): PodcastResponse
+
     companion object {
         val instance: ItunesService by lazy {
             val retrofit = Retrofit.Builder()

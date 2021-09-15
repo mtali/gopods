@@ -1,6 +1,5 @@
 package com.colisa.podplay.repository
 
-import androidx.lifecycle.LiveData
 import com.colisa.podplay.db.PodcastDao
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
@@ -22,6 +21,8 @@ class PodcastRepo(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
+
+
     fun getPodcasts(feedUrl: String) = flow {
         emit(Result.Loading)
         val podcast = podcastDao.getPodcast(feedUrl)
@@ -112,7 +113,9 @@ class PodcastRepo(
         }
     }.flowOn(ioDispatcher)
 
-    fun getSubscribedPodcasts(): LiveData<List<Podcast>> = podcastDao.getPodcasts()
+//    fun getSubscribedPodcasts(): LiveData<List<Podcast>> = podcastDao.getPodcasts()
+
+    fun getPodcasts(subscribed: Boolean) = podcastDao.getPodcasts(subscribed)
 
     private fun rssItemsToEpisodes(rssEpisodes: List<RssFeedResponse.EpisodeResponse>): List<Episode> {
         Timber.d("rssItemsToEpisodes() Thread: ${Thread.currentThread().name}")
