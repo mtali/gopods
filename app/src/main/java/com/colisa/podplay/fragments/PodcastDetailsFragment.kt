@@ -15,6 +15,7 @@ import com.colisa.podplay.R
 import com.colisa.podplay.adapters.EpisodeListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastDetailsBinding
 import com.colisa.podplay.ui.GoViewModel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class PodcastDetailsFragment : Fragment() {
@@ -70,25 +71,27 @@ class PodcastDetailsFragment : Fragment() {
     }
 
     private fun setupEpisodesListAdapter() {
-        binding?.let { binding ->
-            val viewModel = binding.goViewModel
-            if (viewModel != null) {
-                val recycler = binding.episodesRv
-                val layoutManager = LinearLayoutManager(context)
-                val adapter = EpisodeListAdapter(viewModel)
-                val divider = DividerItemDecoration(recycler.context, layoutManager.orientation)
+        lifecycleScope.launch {
+            binding?.let { binding ->
+                val viewModel = binding.goViewModel
+                if (viewModel != null) {
+                    val recycler = binding.episodesRv
+                    val layoutManager = LinearLayoutManager(context)
+                    val adapter = EpisodeListAdapter(viewModel)
+                    val divider = DividerItemDecoration(recycler.context, layoutManager.orientation)
 
-                recycler.apply {
-                    this.adapter = adapter
-                    this.layoutManager = layoutManager
-                    this.addItemDecoration(divider)
+                    recycler.apply {
+                        this.adapter = adapter
+                        this.layoutManager = layoutManager
+                        this.addItemDecoration(divider)
+                    }
+                } else {
+                    Timber.w("GoViewModel not initialized when attempting to set up adapter.")
                 }
-            } else {
-                Timber.w("GoViewModel not initialized when attempting to set up adapter.")
             }
+            if (binding == null)
+                Timber.w("Unable to set episodes list adapter -> binding is null!")
         }
-        if (binding == null)
-            Timber.w("Unable to set episodes list adapter -> binding is null!")
     }
 
     override fun onDestroyView() {
