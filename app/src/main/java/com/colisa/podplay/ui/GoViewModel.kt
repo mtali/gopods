@@ -3,11 +3,11 @@ package com.colisa.podplay.ui
 import android.app.Application
 import androidx.annotation.AnyThread
 import androidx.lifecycle.*
+import com.colisa.podplay.GoConstants
 import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.network.Resource
-import com.colisa.podplay.network.Result
 import com.colisa.podplay.network.api.FeedService
 import com.colisa.podplay.network.api.ItunesService
 import com.colisa.podplay.repository.ItunesRepo
@@ -53,7 +53,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     private val podcastsRepo: PodcastRepo by lazy {
         PodcastRepo(
             FeedService.instance,
-            GoDatabase.getInstance(application).podcastDao()
+            db
         )
     }
 
@@ -70,14 +70,12 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
     private var query: String? = null
     private var searchJob: Job? = null
     private val _searchPodcasts = MutableLiveData<List<IPodcast>>()
-    val searchPodcasts: LiveData<List<IPodcast>> = _searchPodcasts
 
     // Current IPodcast
     private var _activeIPodcast = MutableLiveData<IPodcast?>()
     var activeIPodcast: LiveData<IPodcast?> = _activeIPodcast
 
     // Feed
-    private var loadNewFeed = true
     private var feedJob: Job? = null
     private val _rPodcastFeed = MutableLiveData<RPodcast?>()
     val rPodcastFeed: LiveData<RPodcast?> = _rPodcastFeed
@@ -167,29 +165,27 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun loadLocalOrLivePodcast(feedUrl: String, success: suspend (Podcast) -> Unit) {
+    private fun fetchPodcastFeed(url: String, block: suspend (Podcast) -> Unit) {
         feedJob?.cancel()
         feedJob = viewModelScope.launch {
-            podcastsRepo.getPodcasts(feedUrl)
+            podcastsRepo.getPodcastFeed(url)
                 .collect { result ->
                     when (result) {
-                        is Result.Loading -> {
+                        is Resource.Loading -> {
+                            spinner(true)
+                        }
 
-                            _spinner.value = true
+                        is Resource.Error -> {
+                            spinner(false)
+                            message(result.error?.message)
                         }
-                        is Result.Error -> {
-                            _spinner.value = false
-                            _snackbar.value =
-                                Event(result.exception.message ?: "Unknown error!")
-                        }
-                        is Result.OK -> {
-                            val data = result.data
-                            if (data == null) {
-                                _snackbar.value = Event("Empty response")
-                            } else {
-                                success(result.data)
+
+                        is Resource.Success -> {
+                            val podcast = result.data
+                            podcast?.let {
+                                block(it)
                             }
-                            _spinner.value = false
+                            spinner(false)
                         }
                     }
                 }
@@ -198,32 +194,44 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onLoadPodcastRssFeed() {
         val url = _activeIPodcast.value?.feedUrl ?: return
-        loadLocalOrLivePodcast(url) { podcast ->
-            podcast.imageUrl = activeIPodcast.value?.imageUrl ?: ""
-            podcast.imageUrl600 = activeIPodcast.value?.imageUrl600 ?: ""
-            activePodcast = podcast
-            _rPodcastFeed.value = podcast.toRPodcastMainSafe()
+
+        fetchPodcastFeed(url) {
+            activePodcast = it
+            _rPodcastFeed.value = it.toRPodcastMainSafe()
         }
     }
 
-    fun setActivePodcast(feedUrl: String) {
-        loadLocalOrLivePodcast(feedUrl) {
-            openPodcastDetail(it.toIPodcast())
-        }
-    }
-
-    fun saveActivePodcast() {
-        activePodcast?.let {
-            viewModelScope.launch {
-                podcastsRepo.savePodcast(it)
+    fun onNavigation(from: String) {
+        when (from) {
+            GoConstants.DETAILS_FRAGMENT_TAG -> {
+                spinner(false)
+                feedJob?.cancel()
+                // TODO: Clean other variables
+            }
+            else -> {
+                throw IllegalStateException("Unknown back navigation tag: '${from}'")
             }
         }
     }
 
-    fun deleteActivePodcast() {
-        activePodcast?.let {
-            viewModelScope.launch {
-                podcastsRepo.deletePodcast(it)
+    fun setActivePodcast(feedUrl: String) {
+        fetchPodcastFeed(url = feedUrl) { podcast ->
+            openPodcastDetail(podcast.toIPodcast())
+        }
+    }
+
+    fun subscribeActivePodcast() {
+        viewModelScope.launch {
+            activePodcast?.let { podcast ->
+                podcastsRepo.subscribePodcast(podcast, true)
+            }
+        }
+    }
+
+    fun unsubscribeActivePodcast() {
+        viewModelScope.launch {
+            activePodcast?.let { podcast ->
+                podcastsRepo.subscribePodcast(podcast, false)
             }
         }
     }
@@ -236,7 +244,7 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun Podcast.toRPodcast(): RPodcast {
         return RPodcast(
-            subscribed = (id != null),
+            subscribed = subscribed,
             feedTitle = htmlToSpannable(feedTitle).toString(),
             feedUrl = feedUrl,
             feedDesc = htmlToSpannable(feedDescription).toString(),

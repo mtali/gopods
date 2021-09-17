@@ -276,12 +276,12 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
     }
 
     override fun onSubscribe() {
-        goViewModel.saveActivePodcast()
+        goViewModel.subscribeActivePodcast()
         onBackPressed()
     }
 
     override fun onUnsubscribe() {
-        goViewModel.deleteActivePodcast()
+        goViewModel.unsubscribeActivePodcast()
         onBackPressed()
     }
 

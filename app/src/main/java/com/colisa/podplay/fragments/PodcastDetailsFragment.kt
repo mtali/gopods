@@ -3,12 +3,14 @@ package com.colisa.podplay.fragments
 import android.content.Context
 import android.os.Bundle
 import android.view.*
+import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.colisa.podplay.GoConstants
 import com.colisa.podplay.R
 import com.colisa.podplay.adapters.EpisodeListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastDetailsBinding
@@ -143,6 +145,12 @@ class PodcastDetailsFragment : Fragment() {
             listener = context
         } else {
             throw IllegalStateException("${requireContext()} must implement OnPodcastDetailsListener")
+        }
+
+        requireActivity().onBackPressedDispatcher.addCallback {
+            goViewModel.onNavigation(GoConstants.DETAILS_FRAGMENT_TAG)
+            remove()
+            activity?.onBackPressed()
         }
     }
 }

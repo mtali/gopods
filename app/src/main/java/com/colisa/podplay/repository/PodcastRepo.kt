@@ -1,83 +1,141 @@
 package com.colisa.podplay.repository
 
-import com.colisa.podplay.db.PodcastDao
+import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
-import com.colisa.podplay.network.Result
 import com.colisa.podplay.network.api.FeedService
-import com.colisa.podplay.network.models.RssFeedResponse
-import com.colisa.podplay.util.DateUtils
+import com.colisa.podplay.network.networkBoundResource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+
+class PodcastUpdateInfo(val feedUrl: String, val name: String, val newCount: Int)
+
 class PodcastRepo(
     private var feedService: FeedService,
-    private var podcastDao: PodcastDao,
+    private var db: GoDatabase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
 
+    private val podcastDao = db.podcastDao()
 
-    fun getPodcasts(feedUrl: String) = flow {
-        emit(Result.Loading)
-        val podcast = podcastDao.getPodcast(feedUrl)
-        if (podcast != null) {
-            podcast.id?.let {
-                podcast.episodes = podcastDao.getEpisodes(it)
+    /**
+     * Retrieve podcast from database and in parallel start a background task
+     * to fetch fresh podcast and episodes
+     */
+    suspend fun getPodcastFeed(url: String) = networkBoundResource(
+        query = {
+            podcastDao.loadPodcastByUrl(url).mapLatest { podcast ->
+                podcast.episodes = podcastDao.loadPodcastEpisodesStatic(podcast.id!!)
+                podcast
             }
-            emit(Result.OK(podcast))
-        } else {
-            try {
-                val r = feedService.getFeed(feedUrl)
-                emit(Result.OK(rssResponseToPodcast(feedUrl, "", "", r)))
-            } catch (e: Throwable) {
-                emit(Result.Error(e))
+        },
+
+        fetch = {
+            feedService.fetchFeed(url)
+        },
+
+        saveFetchResult = { response ->
+            val newPodcast = podcastDao.getPodcast(url)!!.copy(
+                feedDescription = response.description,
+                episodes = response.toEpisodes()
+            )
+            db.runInTransaction {
+                val id = podcastDao.insertPodcast(newPodcast)
+                for (episode in newPodcast.episodes) {
+                    episode.podcastId = id
+                    podcastDao.insertEpisode(episode)
+                }
             }
+        },
+
+        shouldFetch = { true },
+
+        onFetchFailed = {
+            Timber.e(it, "onFetchFailed: failed to fetch or save response")
         }
 
-    }.flowOn(ioDispatcher)
+    ).flowOn(ioDispatcher)
 
 
-    suspend fun savePodcast(podcast: Podcast) = withContext(ioDispatcher) {
-        val id = podcastDao.insertPodcast(podcast)
-        for (episode in podcast.episodes) {
-            episode.podcastId = id
-            podcastDao.insertEpisode(episode)
+    /**
+     * Update subscription status of a podcast
+     */
+    suspend fun subscribePodcast(podcast: Podcast, subscribed: Boolean) {
+        podcast.apply {
+            this.subscribed = subscribed
         }
+        podcastDao.updatePodcasts(podcast)
     }
 
+    /**
+     * Will delete related episodes i.e FK constraints
+     */
     suspend fun deletePodcast(podcast: Podcast) = withContext(ioDispatcher) {
         podcastDao.deletePodcast(podcast)
     }
 
-
-    private fun getNewEpisodes(localPodcast: Podcast) = flow {
-        try {
-            val res = feedService.getFeed(localPodcast.feedUrl)
-            val remotePodcast =
-                rssResponseToPodcast(
-                    localPodcast.feedUrl,
-                    localPodcast.imageUrl,
-                    localPodcast.imageUrl600,
-                    res
-                )
-            remotePodcast?.let {
-                val localEpisode = podcastDao.getEpisodes(localPodcast.id!!)
-                val newEpisodes = remotePodcast.episodes.filter { episode ->
-                    localEpisode.find { episode.guid == it.guid } == null
+    /**
+     * Check online and local podcasts and determine new episodes
+     * On error return empty list
+     */
+    private suspend fun getNewEpisodes(podcast: Podcast): List<Episode> {
+        return try {
+            val newEpisodes = podcast.id?.let { id ->
+                val rs = feedService.fetchFeed(podcast.feedUrl)
+                val remote = rs.toEpisodes(id)
+                val local = podcastDao.loadEpisodes(id).first()
+                val new = remote.filter { episode ->
+                    local.find { episode.guid == it.guid } == null
                 }
-                emit(Result.OK(newEpisodes))
+                return@let new
             }
+            newEpisodes ?: emptyList()
         } catch (e: Throwable) {
-            emit(Result.Error(e))
+            emptyList()
         }
-    }.flowOn(ioDispatcher)
+    }
 
+    /**
+     * Initiate checking for new episodes only for podcasts that user have subscribed
+     * Used for PeriodicWork
+     */
+    suspend fun checkNewEpisodes(): List<PodcastUpdateInfo>? = withContext(ioDispatcher) {
+        val podcasts = podcastDao.loadSubscribedPodcastsStatic(subscribed = true)
+        if (!podcasts.isNullOrEmpty()) {
+            val info = mutableListOf<PodcastUpdateInfo>()
+            var count = podcasts.count()
+            for (podcast in podcasts) {
+                val newEpisodes = getNewEpisodes(podcast)
+                if (newEpisodes.count() > 0) {
+                    saveNewEpisodes(podcast.id!!, newEpisodes)
+                    info.add(
+                        PodcastUpdateInfo(
+                            podcast.feedUrl, podcast.feedTitle, newEpisodes.count()
+                        )
+                    )
+                } else {
+                    Timber.d("No new episodes for: ${podcast.feedTitle}")
+                }
+                count--
+                if (count == 0) {
+                    return@withContext info
+                }
+
+            }
+        } else {
+            Timber.d("No subscribed podcast")
+        }
+        return@withContext null
+    }
+
+
+    /**
+     * Save episodes for a particular podcast
+     */
     private suspend fun saveNewEpisodes(podcastId: Long, episode: List<Episode>) {
         withContext(ioDispatcher) {
             for (e in episode) {
@@ -87,77 +145,9 @@ class PodcastRepo(
         }
     }
 
-    fun checkNewSubscribedPodcastsEpisodes() = flow {
-        val updateInfo = mutableListOf<PodcastUpdateInfo>()
-        val podcasts = podcastDao.getPodcastsStatic()
-        var processCount = podcasts.count()
-        for (podcast in podcasts) {
-            getNewEpisodes(podcast)
-                .collect {
-                    if (it is Result.OK) {
-                        val newEpisodes = it.data
-                        if (newEpisodes.count() > 0) {
-                            saveNewEpisodes(podcast.id!!, newEpisodes)
-                            updateInfo.add(
-                                PodcastUpdateInfo(
-                                    podcast.feedUrl, podcast.feedTitle, newEpisodes.count()
-                                )
-                            )
-                        }
-                        processCount--
-                        if (processCount == 0) {
-                            emit(updateInfo)
-                        }
-                    }
-                }
-        }
-    }.flowOn(ioDispatcher)
-
-//    fun getSubscribedPodcasts(): LiveData<List<Podcast>> = podcastDao.getPodcasts()
-
+    /**
+     * Retrieve flow of podcasts flag: subscribed or not
+     */
     fun getPodcasts(subscribed: Boolean) = podcastDao.getPodcasts(subscribed)
 
-    private fun rssItemsToEpisodes(rssEpisodes: List<RssFeedResponse.EpisodeResponse>): List<Episode> {
-        Timber.d("rssItemsToEpisodes() Thread: ${Thread.currentThread().name}")
-        return rssEpisodes.map {
-            Episode(
-                it.guid ?: "",
-                null,
-                it.title ?: "",
-                it.description ?: "",
-                it.url ?: "",
-                it.type ?: "",
-                DateUtils.xmlDateToDate(it.pubDate),
-                it.duration ?: ""
-
-            )
-        }
-    }
-
-    @Suppress("SameParameterValue")
-    private fun rssResponseToPodcast(
-        feedUrl: String,
-        imageUrl: String,
-        imageUrl600: String,
-        rssResponse: RssFeedResponse
-    ): Podcast? {
-        val items = rssResponse.episodes ?: return null
-        val description =
-            if (rssResponse.description == "") rssResponse.summary else rssResponse.description
-        return Podcast(
-            id = null,
-            feedUrl = feedUrl,
-            feedTitle = rssResponse.title,
-            feedDescription = description,
-            imageUrl = imageUrl,
-            imageUrl600 = imageUrl600,
-            lastUpdated = rssResponse.lastUpdated,
-            episodes = rssItemsToEpisodes(items)
-        )
-    }
-
-    /**
-     * Hold update details for a single podcast
-     */
-    class PodcastUpdateInfo(val feedUrl: String, val name: String, val newCount: Int)
 }

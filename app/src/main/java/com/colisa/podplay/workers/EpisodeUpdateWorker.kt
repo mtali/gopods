@@ -16,26 +16,30 @@ import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.extensions.notificationManager
 import com.colisa.podplay.network.api.FeedService
 import com.colisa.podplay.repository.PodcastRepo
+import com.colisa.podplay.repository.PodcastUpdateInfo
 import com.colisa.podplay.ui.MainActivity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.withContext
+import com.colisa.podplay.util.Utils
+import timber.log.Timber
 
 class EpisodeUpdateWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
+
     override suspend fun doWork(): Result {
-        return withContext(Dispatchers.IO) {
-            val db = GoDatabase.getInstance(applicationContext)
-            val repo = PodcastRepo(FeedService.instance, db.podcastDao())
-            repo.checkNewSubscribedPodcastsEpisodes().collect { listInfo ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    createNotificationChannel()
-                }
-                for (info in listInfo) {
-                    displayNotification(info)
-                }
+        val db = GoDatabase.getInstance(applicationContext)
+        val repo = PodcastRepo(FeedService.instance, db)
+        repo.checkNewEpisodes()?.let { infoList ->
+            requireChannel()
+            for (info in infoList) {
+                displayNotification(info)
             }
-            Result.success()
+        }
+        Timber.d("doWork() return -mtali")
+        return Result.success()
+    }
+
+    private fun requireChannel() {
+        if (Utils.isOreo()) {
+            createNotificationChannel()
         }
     }
 
@@ -52,7 +56,7 @@ class EpisodeUpdateWorker(context: Context, params: WorkerParameters) :
         }
     }
 
-    private fun displayNotification(info: PodcastRepo.PodcastUpdateInfo) {
+    private fun displayNotification(info: PodcastUpdateInfo) {
         val contentIntent = Intent(applicationContext, MainActivity::class.java)
         contentIntent.putExtra(EXTRA_FEED_URL, info.feedUrl)
         val pendingContentIntent =

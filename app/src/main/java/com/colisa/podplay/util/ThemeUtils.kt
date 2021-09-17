@@ -6,7 +6,6 @@ import android.content.res.Resources
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
-import com.colisa.podplay.GoConstants
 import com.colisa.podplay.R
 import com.colisa.podplay.goPreferences
 
@@ -78,14 +77,6 @@ object ThemeUtils {
             goPreferences.accent = accent
         }
         return ContextCompat.getColor(context, accent)
-    }
-
-    @JvmStatic
-    fun getTabIcon(tab: String) = when (tab) {
-        GoConstants.PODCASTS_TAB -> R.drawable.ic_library_music
-        GoConstants.SEARCH_TAB -> R.drawable.ic_search
-        GoConstants.EPISODES_TAB -> R.drawable.ic_music_note
-        else -> R.drawable.ic_settings
     }
 
     @JvmStatic

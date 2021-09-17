@@ -1,12 +1,8 @@
 package com.colisa.podplay.db
 
 import android.util.SparseLongArray
-import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
+import androidx.room.*
 import androidx.room.OnConflictStrategy.REPLACE
-import androidx.room.Query
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.models.PodcastSearchResult
@@ -15,14 +11,9 @@ import kotlinx.coroutines.flow.map
 
 @Dao
 interface PodcastDao {
-    @Query("SELECT * FROM podcast ORDER BY feedTitle")
-    fun getAllPodcasts(): LiveData<List<Podcast>>
 
     @Query("SELECT * FROM podcast WHERE subscribed = :subscribed ORDER BY feedTitle")
     fun getPodcasts(subscribed: Boolean = true): Flow<List<Podcast>>
-
-    @Query("SELECT * FROM episode WHERE podcastId = :podcastId ORDER BY releaseDate DESC")
-    fun getEpisodes(podcastId: Long): List<Episode>
 
     @Query("SELECT * FROM podcast WHERE feedUrl = :url")
     fun getPodcast(url: String): Podcast?
@@ -36,14 +27,7 @@ interface PodcastDao {
     @Insert(onConflict = REPLACE)
     fun insertEpisode(episode: Episode): Long
 
-    @Query("SELECT * FROM podcast ORDER BY feedTitle")
-    suspend fun getPodcastsStatic(): List<Podcast>
 
-
-    /**
-     * Insert search result to database
-     * Code below is responsible for caching search results
-     */
     @Insert(onConflict = REPLACE)
     fun insertSearchResult(result: PodcastSearchResult)
 
@@ -65,4 +49,20 @@ interface PodcastDao {
             podcasts.sortedWith(compareBy { order.get(it.collectionId.toInt()) })
         }
     }
+
+    @Query("SELECT * FROM episode WHERE podcastId = :podcastId ORDER BY releaseDate DESC")
+    fun loadEpisodes(podcastId: Long): Flow<List<Episode>>
+
+    @Query("SELECT * FROM podcast WHERE feedUrl = :url")
+    fun loadPodcastByUrl(url: String): Flow<Podcast>
+
+    @Query("SELECT * FROM episode WHERE podcastId = :podcastId ORDER BY releaseDate DESC")
+    suspend fun loadPodcastEpisodesStatic(podcastId: Long): List<Episode>
+
+    @Update
+    suspend fun updatePodcasts(vararg podcasts: Podcast)
+
+    @Query("SELECT * FROM podcast WHERE subscribed = :subscribed ORDER BY feedTitle")
+    suspend fun loadSubscribedPodcastsStatic(subscribed: Boolean): List<Podcast>
+
 }
