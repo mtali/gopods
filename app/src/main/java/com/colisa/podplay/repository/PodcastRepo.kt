@@ -1,6 +1,7 @@
 package com.colisa.podplay.repository
 
 import com.colisa.podplay.db.GoDatabase
+import com.colisa.podplay.goRssParser
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.network.api.FeedService
@@ -85,6 +86,8 @@ class PodcastRepo(
     private suspend fun getNewEpisodes(podcast: Podcast): List<Episode> {
         return try {
             val newEpisodes = podcast.id?.let { id ->
+                // Clear cache - make sure fresh data not cached
+                goRssParser.flushCache(podcast.feedUrl)
                 val rs = feedService.fetchFeed(podcast.feedUrl)
                 val remote = rs.toEpisodes(id)
                 val local = podcastDao.loadEpisodes(id).first()
