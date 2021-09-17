@@ -1,7 +1,7 @@
 package com.colisa.podplay.network.models
 
 import com.colisa.podplay.models.Podcast
-import java.util.*
+import com.colisa.podplay.util.DateUtils
 
 data class PodcastResponse(
     val resultCount: Int,
@@ -31,7 +31,7 @@ data class PodcastResponse(
                         feedDescription = "",
                         imageUrl = it.artworkUrl100,
                         imageUrl600 = it.artworkUrl600,
-                        lastUpdated = Date(),
+                        lastUpdated = DateUtils.parseItunesDate(it.releaseDate)!!,
                         episodes = emptyList()
                     )
                 }
