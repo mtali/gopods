@@ -172,7 +172,12 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
                 .collect { result ->
                     when (result) {
                         is Resource.Loading -> {
-                            spinner(true)
+                            result.data?.let { podcast ->
+                                block(podcast)
+                                spinner
+                            }
+                            // If there are episodes we don't show loading
+                            spinner(result.data?.episodes.isNullOrEmpty())
                         }
 
                         is Resource.Error -> {
