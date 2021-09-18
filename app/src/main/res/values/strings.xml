@@ -31,4 +31,13 @@
     <string name="content_fast_forward">Fast forward</string>
     <string name="settings">Settings</string>
 
+    <!--Settings-->
+    <string name="category_ui">UI</string>
+
+    <!--Theme - Settings -->
+    <string name="pref_theme_title">Theme</string>
+    <string name="pref_theme_light_title">Light</string>
+    <string name="pref_theme_dark_title">Dark</string>
+    <string name="pref_theme_auto_title">Automatic</string>
+
 </resources>

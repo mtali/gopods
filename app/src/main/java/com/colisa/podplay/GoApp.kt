@@ -1,7 +1,9 @@
 package com.colisa.podplay
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
 import com.colisa.podplay.logging.ReleaseTree
+import com.colisa.podplay.util.ThemeUtils
 import com.prof.rssparser.Parser
 import timber.log.Timber
 import java.nio.charset.Charset
@@ -21,6 +23,7 @@ class GoApp : Application() {
         super.onCreate()
         setTimber()
         prefs = GoPreferences(applicationContext)
+        AppCompatDelegate.setDefaultNightMode(ThemeUtils.getDefaultNightMode(applicationContext))
         rssParser = Parser.Builder()
             .context(applicationContext)
             .charset(Charset.forName("ISO-8859-7"))

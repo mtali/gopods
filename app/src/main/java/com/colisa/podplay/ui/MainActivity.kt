@@ -16,6 +16,7 @@ import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.databinding.DataBindingUtil
 import androidx.media.MediaBrowserServiceCompat
 import androidx.work.*
@@ -486,6 +487,16 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
 
     override fun onCloseActivity() {
         finishAndRemoveTask()
+    }
+
+    override fun onAppearanceChanged(isThemeChanged: Boolean) {
+        if (isThemeChanged) {
+            AppCompatDelegate.setDefaultNightMode(
+                ThemeUtils.getDefaultNightMode(this)
+            )
+        } else {
+            ThemeUtils.applyChanges(this)
+        }
     }
 
 

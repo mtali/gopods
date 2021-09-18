@@ -1,9 +1,11 @@
 package com.colisa.podplay.util
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import androidx.annotation.ColorInt
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import com.colisa.podplay.R
@@ -49,6 +51,29 @@ object ThemeUtils {
         Pair(R.color.brown_300, R.style.BaseTheme_Brown300),
         Pair(R.color.blue_grey_300, R.style.BaseTheme_BlueGrey300)
     )
+
+    @JvmStatic
+    fun resolveThemeIcon(context: Context) = when (goPreferences.theme) {
+        context.getString(R.string.pref_theme_light) -> R.drawable.ic_day
+        context.getString(R.string.pref_theme_auto) -> R.drawable.ic_auto
+        else -> R.drawable.ic_night
+    }
+
+    @JvmStatic
+    fun getDefaultNightMode(context: Context) = when (goPreferences.theme) {
+        context.getString(R.string.pref_theme_light) -> AppCompatDelegate.MODE_NIGHT_NO
+        context.getString(R.string.pref_theme_dark) -> AppCompatDelegate.MODE_NIGHT_YES
+        else -> if (VersionUtils.isQ()) {
+            AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        } else {
+            AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY
+        }
+    }
+
+    @JvmStatic
+    fun applyChanges(activity: Activity) {
+        TODO("Implement this")
+    }
 
 
     fun getAlphaAccent(context: Context): Int {

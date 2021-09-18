@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--Preference keys-->
-    <string name="pref_theme" translatable="false">theme_pref</string>
-    <string name="pref_theme_auto">theme_pref_auto</string>
     <string name="pref_accent">accent_theme_pref</string>
     <string name="pref_recent_episode">pref_restore_latest_episode</string>
     <string name="pref_fast_seeking">pref_fast_seeking</string>
@@ -11,4 +9,11 @@
     <!--App specific-->
     <string name="app_name">GoPods</string>
     <string name="version_name">1.0.0</string>
+
+    <!-- Preference keys -->
+    <string name="pref_theme">theme_pref</string>
+    <string name="pref_theme_light">theme_pref_light</string>
+    <string name="pref_theme_dark">theme_pref_dark</string>
+    <string name="pref_theme_auto">theme_pref_auto</string>
+
 </resources>
