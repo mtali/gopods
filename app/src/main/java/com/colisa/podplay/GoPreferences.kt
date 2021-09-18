@@ -34,7 +34,7 @@ class GoPreferences(context: Context) {
         set(value) = putObjectForClass(prefsRecentEpisode, value, NowPlayingEpisode::class.java)
 
     var fastSeekingStep: Int
-        get() = mPrefs.getInt(prefsFastSeek, 5)
+        get() = mPrefs.getInt(prefsFastSeek, 10)
         set(value) = mPrefs.edit { putInt(prefsFastSeek, value) }
 
     val notifyEpisodeUpdates

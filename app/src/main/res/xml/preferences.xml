@@ -28,6 +28,16 @@
             app:summaryOn="@string/pref_episode_notify_summary_on"
             app:title="@string/pref_episode_notify_title" />
 
+        <SeekBarPreference
+            android:defaultValue="10"
+            android:key="@string/pref_fast_seeking"
+            android:max="60"
+            android:summary="@string/pref_fast_seeking_summary"
+            android:title="@string/pref_fast_seeking_title"
+            app:min="5"
+            app:seekBarIncrement="5"
+            app:showSeekBarValue="true" />
+
     </PreferenceCategory>
 
 
