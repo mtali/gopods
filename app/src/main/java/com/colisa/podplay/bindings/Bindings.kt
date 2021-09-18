@@ -11,11 +11,11 @@ import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.colisa.podplay.R
-import com.colisa.podplay.adapters.EpisodeListAdapter
-import com.colisa.podplay.adapters.PodcastsListAdapter
 import com.colisa.podplay.extensions.handleViewVisibility
 import com.colisa.podplay.ui.GoViewModel
 import com.colisa.podplay.ui.NowPlayingViewModel
+import com.colisa.podplay.ui.adapters.EpisodeListAdapter
+import com.colisa.podplay.ui.adapters.PodcastsListAdapter
 import com.google.android.material.imageview.ShapeableImageView
 
 /**

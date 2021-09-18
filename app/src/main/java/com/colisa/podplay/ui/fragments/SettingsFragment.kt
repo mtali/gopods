@@ -1,4 +1,4 @@
-package com.colisa.podplay.fragments
+package com.colisa.podplay.ui.fragments
 
 import android.content.Context
 import android.os.Bundle

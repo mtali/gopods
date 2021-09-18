@@ -1,4 +1,4 @@
-package com.colisa.podplay.adapters
+package com.colisa.podplay.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

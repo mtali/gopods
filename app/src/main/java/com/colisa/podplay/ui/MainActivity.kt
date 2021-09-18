@@ -33,9 +33,9 @@ import com.colisa.podplay.databinding.ActivityMainBinding
 import com.colisa.podplay.databinding.NowPlayingBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
 import com.colisa.podplay.extensions.*
-import com.colisa.podplay.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.goPreferences
 import com.colisa.podplay.player.GoPlayerService
+import com.colisa.podplay.ui.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.util.EventObserver
 import com.colisa.podplay.util.ThemeUtils
 import com.colisa.podplay.util.VersionUtils

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/podcastsFragment"
-        android:name="com.colisa.podplay.fragments.PodcastsFragment"
+        android:name="com.colisa.podplay.ui.fragments.PodcastsFragment"
         android:label="PodcastsFragment"
         tools:layout="@layout/fragment_podcasts">
         <action
@@ -26,12 +26,12 @@
 
     <fragment
         android:id="@+id/podcastDetailsFragment"
-        android:name="com.colisa.podplay.fragments.PodcastDetailsFragment"
+        android:name="com.colisa.podplay.ui.fragments.PodcastDetailsFragment"
         android:label="PodcastDetailFragment"
         tools:layout="@layout/fragment_podcast_details" />
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.colisa.podplay.fragments.SettingsFragment"
+        android:name="com.colisa.podplay.ui.fragments.SettingsFragment"
         android:label="SettingsFragment"
         tools:layout="@layout/fragment_settings" />
 </navigation>

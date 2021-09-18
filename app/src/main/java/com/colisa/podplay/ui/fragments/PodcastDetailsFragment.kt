@@ -1,4 +1,4 @@
-package com.colisa.podplay.fragments
+package com.colisa.podplay.ui.fragments
 
 import android.content.Context
 import android.os.Bundle
@@ -12,9 +12,9 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.colisa.podplay.GoConstants
 import com.colisa.podplay.R
-import com.colisa.podplay.adapters.EpisodeListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastDetailsBinding
 import com.colisa.podplay.ui.GoViewModel
+import com.colisa.podplay.ui.adapters.EpisodeListAdapter
 import kotlinx.coroutines.launch
 import timber.log.Timber
 

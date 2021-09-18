@@ -1,4 +1,4 @@
-package com.colisa.podplay.fragments
+package com.colisa.podplay.ui.fragments
 
 import android.content.Context
 import android.os.Bundle
@@ -13,11 +13,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.colisa.podplay.R
-import com.colisa.podplay.adapters.PodcastsListAdapter
 import com.colisa.podplay.databinding.FragmentPodcastsBinding
 import com.colisa.podplay.extensions.hideKeyboard
 import com.colisa.podplay.ui.GoViewModel
 import com.colisa.podplay.ui.UIControlInterface
+import com.colisa.podplay.ui.adapters.PodcastsListAdapter
 import com.colisa.podplay.util.EventObserver
 import timber.log.Timber
 
