@@ -68,6 +68,14 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
             stb.setNavigationOnClickListener {
                 uiControlInterface.onCloseActivity()
             }
+            stb.setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.action_settings -> {
+                        navigateToSettings()
+                    }
+                }
+                return@setOnMenuItemClickListener true
+            }
             val searchItem = stb.menu.findItem(R.id.action_main_search)
             val searchView = searchItem.actionView as SearchView
             searchView.setOnQueryTextListener(this)
@@ -99,6 +107,7 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
         return true
     }
 
+
     private fun setupNavigation() {
         goViewModel.openPodcastDetails.observe(viewLifecycleOwner, EventObserver {
             navigateToPodcastDetails(it)
@@ -107,6 +116,11 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
 
     private fun navigateToPodcastDetails(IPodcast: GoViewModel.IPodcast) {
         val action = PodcastsFragmentDirections.actionPodcastsFragmentToPodcastDetailsFragment()
+        findNavController().navigate(action)
+    }
+
+    private fun navigateToSettings() {
+        val action = PodcastsFragmentDirections.actionPodcastsFragmentToSettingsFragment()
         findNavController().navigate(action)
     }
 

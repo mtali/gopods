@@ -16,6 +16,12 @@
             app:enterAnim="@anim/slide_left"
             app:exitAnim="@anim/wait_anim"
             app:popExitAnim="@anim/slide_right" />
+        <action
+            android:id="@+id/action_podcastsFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/slide_left"
+            app:exitAnim="@anim/wait_anim"
+            app:popExitAnim="@anim/slide_right" />
     </fragment>
 
     <fragment
@@ -23,4 +29,9 @@
         android:name="com.colisa.podplay.fragments.PodcastDetailsFragment"
         android:label="PodcastDetailFragment"
         tools:layout="@layout/fragment_podcast_details" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.colisa.podplay.fragments.SettingsFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
 </navigation>
