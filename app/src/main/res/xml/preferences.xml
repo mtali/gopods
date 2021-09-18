@@ -17,4 +17,18 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:layout="@layout/preference_category"
+        app:title="@string/category_general">
+
+        <SwitchPreferenceCompat
+            android:summaryOff="@string/pref_episode_notify_summary_off"
+            app:defaultValue="true"
+            app:key="@string/pref_episode_notify"
+            app:summaryOn="@string/pref_episode_notify_summary_on"
+            app:title="@string/pref_episode_notify_title" />
+
+    </PreferenceCategory>
+
+
 </PreferenceScreen>

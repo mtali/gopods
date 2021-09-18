@@ -19,6 +19,8 @@ class GoPreferences(context: Context) {
 
     private val prefsFastSeek = context.getString(R.string.pref_fast_seeking)
 
+    private val prefEpisodeNotify = context.getString(R.string.pref_episode_notify)
+
     var theme
         get() = mPrefs.getString(prefsTheme, prefsThemeDef)
         set(value) = mPrefs.edit { putString(prefsTheme, value) }
@@ -34,6 +36,9 @@ class GoPreferences(context: Context) {
     var fastSeekingStep: Int
         get() = mPrefs.getInt(prefsFastSeek, 5)
         set(value) = mPrefs.edit { putInt(prefsFastSeek, value) }
+
+    val notifyEpisodeUpdates
+        get() = mPrefs.getBoolean(prefEpisodeNotify, true)
 
 
     // Saves object into the Preferences using Moshi

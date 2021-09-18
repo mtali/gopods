@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters
 import com.colisa.podplay.R
 import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.extensions.notificationManager
+import com.colisa.podplay.goPreferences
 import com.colisa.podplay.network.api.FeedService
 import com.colisa.podplay.repository.PodcastRepo
 import com.colisa.podplay.repository.PodcastUpdateInfo
@@ -25,15 +26,18 @@ class EpisodeUpdateWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val db = GoDatabase.getInstance(applicationContext)
-        val repo = PodcastRepo(FeedService.instance, db)
-        repo.checkNewEpisodes()?.let { infoList ->
+        val repo = PodcastRepo(FeedService.instance, GoDatabase.getInstance(applicationContext))
+        val episodes = repo.checkNewEpisodes()
+        if (goPreferences.notifyEpisodeUpdates) {
             requireChannel()
-            for (info in infoList) {
-                displayNotification(info)
+            episodes?.let { infoList ->
+                for (info in infoList) {
+                    displayNotification(info)
+                }
             }
+        } else {
+            Timber.d("Episode update notification disabled!")
         }
-        Timber.d("doWork() return -mtali")
         return Result.success()
     }
 

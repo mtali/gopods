@@ -16,4 +16,6 @@
     <string name="pref_theme_dark">theme_pref_dark</string>
     <string name="pref_theme_auto">theme_pref_auto</string>
 
+    <string name="pref_episode_notify">episode_notify</string>
+
 </resources>
