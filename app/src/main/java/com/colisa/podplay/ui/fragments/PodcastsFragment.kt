@@ -18,6 +18,7 @@ import com.colisa.podplay.extensions.hideKeyboard
 import com.colisa.podplay.ui.GoViewModel
 import com.colisa.podplay.ui.UIControlInterface
 import com.colisa.podplay.ui.adapters.PodcastsListAdapter
+import com.colisa.podplay.util.DialogUtils
 import com.colisa.podplay.util.EventObserver
 import timber.log.Timber
 
@@ -72,6 +73,10 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
                 when (it.itemId) {
                     R.id.action_settings -> {
                         navigateToSettings()
+                    }
+
+                    R.id.action_about -> {
+                        DialogUtils.showAboutDialog(requireContext())
                     }
                 }
                 return@setOnMenuItemClickListener true

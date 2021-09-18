@@ -49,6 +49,9 @@
     <!--Fast seeking - Settings-->
     <string name="pref_fast_seeking_summary">Fast forward/rewind step (seconds)</string>
     <string name="pref_fast_seeking_title">Fast seeking</string>
+    <string name="about_message">GoPods is a podcast application developed by Emmanuel Mtali\nmtali.emmanuel@protonmail.com
+    </string>
+    <string name="action_cool">Cool</string>
 
 
 </resources>
