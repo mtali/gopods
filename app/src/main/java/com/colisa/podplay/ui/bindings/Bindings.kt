@@ -1,4 +1,4 @@
-package com.colisa.podplay.bindings
+package com.colisa.podplay.ui.bindings
 
 import android.text.TextUtils
 import android.view.View

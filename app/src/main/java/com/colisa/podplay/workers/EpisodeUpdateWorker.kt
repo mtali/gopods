@@ -12,12 +12,12 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.colisa.podplay.R
+import com.colisa.podplay.data.PodcastRepo
+import com.colisa.podplay.data.PodcastUpdateInfo
 import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.extensions.notificationManager
 import com.colisa.podplay.goPreferences
 import com.colisa.podplay.network.api.FeedService
-import com.colisa.podplay.repository.PodcastRepo
-import com.colisa.podplay.repository.PodcastUpdateInfo
 import com.colisa.podplay.ui.MainActivity
 import com.colisa.podplay.util.Utils
 import timber.log.Timber

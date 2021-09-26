@@ -1,4 +1,4 @@
-package com.colisa.podplay.repository
+package com.colisa.podplay.data
 
 import com.colisa.podplay.db.GoDatabase
 import com.colisa.podplay.goRssParser
