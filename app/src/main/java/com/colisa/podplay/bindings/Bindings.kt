@@ -42,7 +42,7 @@ fun setImageUrl(view: ImageView, podcast: GoViewModel.IPodcast?, isLarge: Boolea
 @BindingAdapter("app:episodes")
 fun setEpisodes(view: RecyclerView, items: List<GoViewModel.REpisode>?) {
     items?.let {
-        (view.adapter as EpisodeListAdapter).submitList(items)
+        (view.adapter as EpisodeListAdapter).addHeaderAndSubmitList(items)
     }
 }
 
