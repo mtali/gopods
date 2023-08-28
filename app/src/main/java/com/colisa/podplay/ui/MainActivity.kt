@@ -19,7 +19,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.databinding.DataBindingUtil
 import androidx.media.MediaBrowserServiceCompat
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
@@ -32,7 +36,14 @@ import com.colisa.podplay.R
 import com.colisa.podplay.databinding.ActivityMainBinding
 import com.colisa.podplay.databinding.NowPlayingBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
-import com.colisa.podplay.extensions.*
+import com.colisa.podplay.extensions.afterMeasured
+import com.colisa.podplay.extensions.isError
+import com.colisa.podplay.extensions.isPaused
+import com.colisa.podplay.extensions.isPlaying
+import com.colisa.podplay.extensions.isPrepared
+import com.colisa.podplay.extensions.onMediaController
+import com.colisa.podplay.extensions.setupMessagingToast
+import com.colisa.podplay.extensions.stateName
 import com.colisa.podplay.goPreferences
 import com.colisa.podplay.player.GoPlayerService
 import com.colisa.podplay.ui.fragments.OnPodcastDetailsListener
@@ -160,6 +171,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
             } else {
                 startPlaying(npEpisode)
             }
+            openNowPlaying()
         }
     }
 
@@ -300,7 +312,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             TAG_EPISODE_UPDATE_JOB,
-            ExistingPeriodicWorkPolicy.REPLACE,
+            ExistingPeriodicWorkPolicy.UPDATE,
             request
         )
     }
