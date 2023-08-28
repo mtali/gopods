@@ -85,14 +85,15 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
             val searchView = searchItem.actionView as SearchView
             searchView.setOnQueryTextListener(this)
             searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
-                override fun onMenuItemActionCollapse(p0: MenuItem?): Boolean {
+                override fun onMenuItemActionExpand(p0: MenuItem): Boolean {
+                    return true
+                }
+
+                override fun onMenuItemActionCollapse(p0: MenuItem): Boolean {
                     goViewModel.showSubscribed()
                     return true
                 }
 
-                override fun onMenuItemActionExpand(p0: MenuItem?): Boolean {
-                    return true
-                }
             })
 
         }

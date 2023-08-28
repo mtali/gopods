@@ -49,12 +49,12 @@ class PreferencesFragment : PreferenceFragmentCompat(),
 
     override fun onResume() {
         super.onResume()
-        preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+        preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
     }
 
     override fun onPause() {
         super.onPause()
-        preferenceScreen.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
+        preferenceScreen.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(this)
     }
 
 
@@ -71,7 +71,7 @@ class PreferencesFragment : PreferenceFragmentCompat(),
         }
     }
 
-    override fun onPreferenceClick(preference: Preference?): Boolean {
+    override fun onPreferenceClick(preference: Preference): Boolean {
         Timber.d("onPreferenceClick() - mtali")
         return false
     }
@@ -81,4 +81,5 @@ class PreferencesFragment : PreferenceFragmentCompat(),
             return PreferencesFragment()
         }
     }
+
 }

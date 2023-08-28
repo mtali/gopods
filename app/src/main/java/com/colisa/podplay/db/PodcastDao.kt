@@ -1,8 +1,12 @@
 package com.colisa.podplay.db
 
 import android.util.SparseLongArray
-import androidx.room.*
-import androidx.room.OnConflictStrategy.REPLACE
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy.Companion.REPLACE
+import androidx.room.Query
+import androidx.room.Update
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.models.PodcastSearchResult

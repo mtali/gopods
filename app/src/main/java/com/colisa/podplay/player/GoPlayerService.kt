@@ -12,8 +12,14 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.content.ContextCompat
 import androidx.media.MediaBrowserServiceCompat
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.MediaMetadata
+import com.google.android.exoplayer2.PlaybackException
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.Player.STATE_READY
+import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
@@ -26,7 +32,7 @@ class GoPlayerService : MediaBrowserServiceCompat() {
     private lateinit var notificationManager: NotificationManager
 
     private val goAudioAttributes = AudioAttributes.Builder()
-        .setContentType(C.CONTENT_TYPE_MUSIC)
+        .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
         .setUsage(C.USAGE_MEDIA)
         .build()
 
@@ -83,7 +89,7 @@ class GoPlayerService : MediaBrowserServiceCompat() {
         // Build a PendingIntent that can be used to launch the UI
         val sessionPendingIntent =
             packageManager?.getLaunchIntentForPackage(packageName)?.let { intent ->
-                PendingIntent.getActivity(this, 0, intent, 0)
+                PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
             }
 
         // Create a new media session
@@ -143,10 +149,10 @@ class GoPlayerService : MediaBrowserServiceCompat() {
 
         private fun onPlayerStateOrPlayWhenReady(playWhenReady: Boolean, state: Int) {
             when (state) {
-                Player.STATE_READY,
+                STATE_READY,
                 Player.STATE_BUFFERING -> {
                     notificationManager.showNotificationForPlayer(exoPlayer)
-                    if (state == Player.STATE_READY) {
+                    if (state == STATE_READY) {
                         if (!playWhenReady) {
                             stopForeground(false)
                             isForeground = false
@@ -165,7 +171,7 @@ class GoPlayerService : MediaBrowserServiceCompat() {
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            Timber.d("onMediaMetadataChanged: ${mediaMetadata.mediaUri}")
+            Timber.d("onMediaMetadataChanged: $mediaMetadata")
         }
 
     }
@@ -173,11 +179,11 @@ class GoPlayerService : MediaBrowserServiceCompat() {
     private inner class GoPlaybackPrepare : MediaSessionConnector.PlaybackPreparer {
         override fun onCommand(
             player: Player,
-            controlDispatcher: ControlDispatcher,
             command: String,
             extras: Bundle?,
             cb: ResultReceiver?
         ): Boolean = false
+
 
         override fun getSupportedPrepareActions(): Long =
             PlaybackStateCompat.ACTION_PLAY_FROM_URI

@@ -3,7 +3,11 @@ package com.colisa.podplay.ui
 import android.app.Application
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.format.DateUtils
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
 import com.colisa.podplay.goPreferences
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.launch
@@ -49,7 +53,7 @@ class NowPlayingViewModel(application: Application) : AndroidViewModel(applicati
     private val _episodeDuration = MutableLiveData<Long>()
     val episodeDuration: LiveData<Long> = _episodeDuration
 
-    val formattedDuration: LiveData<String> = Transformations.map(_episodeDuration) {
+    val formattedDuration: LiveData<String> = _episodeDuration.map {
         DateUtils.formatElapsedTime(it / 1000)
     }
 

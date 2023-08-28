@@ -1,12 +1,16 @@
 package com.colisa.podplay.db
 
 import android.content.Context
-import androidx.room.*
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.models.PodcastSearchResult
 import timber.log.Timber
-import java.util.*
+import java.util.Date
 
 object Converters {
     @TypeConverter
@@ -44,7 +48,11 @@ object Converters {
 
 }
 
-@Database(entities = [Podcast::class, Episode::class, PodcastSearchResult::class], version = 1)
+@Database(
+    entities = [Podcast::class, Episode::class, PodcastSearchResult::class],
+    version = 1,
+    exportSchema = false
+)
 @TypeConverters(Converters::class)
 abstract class GoDatabase : RoomDatabase() {
     abstract fun podcastDao(): PodcastDao

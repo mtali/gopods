@@ -3,8 +3,8 @@ package com.colisa.podplay.util
 import androidx.lifecycle.Observer
 
 open class Event<out T>(private val content: T) {
-    var hasBeenHandled = false
-        private set
+
+    private var hasBeenHandled = false
 
     fun getContentIfNotHandled(): T? {
         return if (hasBeenHandled) {
@@ -15,12 +15,14 @@ open class Event<out T>(private val content: T) {
         }
     }
 
+    @Suppress("unused")
     fun peekContent(): T = content
 }
 
+
 class EventObserver<T>(private val onEventUnhandledContent: (T) -> Unit) : Observer<Event<T>> {
-    override fun onChanged(t: Event<T>?) {
-        t?.getContentIfNotHandled()?.let {
+    override fun onChanged(value: Event<T>) {
+        value.getContentIfNotHandled()?.let {
             onEventUnhandledContent(it)
         }
     }
