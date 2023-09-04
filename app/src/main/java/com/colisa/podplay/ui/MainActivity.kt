@@ -1,6 +1,7 @@
 package com.colisa.podplay.ui
 
 import android.animation.ValueAnimator
+import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
@@ -14,10 +15,12 @@ import android.view.Gravity
 import android.view.animation.LinearInterpolator
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
 import androidx.media.MediaBrowserServiceCompat
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -51,8 +54,14 @@ import com.colisa.podplay.util.EventObserver
 import com.colisa.podplay.util.ThemeUtils
 import com.colisa.podplay.util.VersionUtils
 import com.colisa.podplay.workers.EpisodeUpdateWorker
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import de.halfbit.edgetoedge.Edge
 import de.halfbit.edgetoedge.edgeToEdge
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -86,9 +95,34 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
     private var progressAnimator: ValueAnimator? = null
     private var episodeDuration: Long = 0
 
+    private val appUpdateManager by lazy { AppUpdateManagerFactory.create(applicationContext) }
+
+    private val appUpdateResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            when (val resultCode = result.resultCode) {
+                Activity.RESULT_OK -> {
+                    quickMessage(R.string.app_updated)
+                }
+
+                Activity.RESULT_CANCELED -> {
+                    quickMessage(R.string.app_update_required)
+                    lifecycleScope.launch {
+                        delay(10_000)
+                        checkForAppUpdates()
+                    }
+                }
+
+                else -> {
+                    quickMessage(R.string.app_update_failed)
+                    Timber.e("Update flow failed with resultCode:$resultCode")
+                }
+            }
+        }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        checkForAppUpdates()
         setTheme(ThemeUtils.getAccentedTheme().first)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
@@ -147,6 +181,20 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
         super.onResume()
         updatePlayState()
         updateControlsFromController()
+        appUpdateManager
+            .appUpdateInfo
+            .addOnSuccessListener { appUpdateInfo ->
+                if (appUpdateInfo.updateAvailability()
+                    == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
+                ) {
+                    // If an in-app update is already running, resume the update.
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        appUpdateResultLauncher,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                    )
+                }
+            }
     }
 
 
@@ -511,6 +559,19 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
         }
     }
 
+    private fun checkForAppUpdates() {
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { info ->
+            val isUpdateAvailable = info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+            val isUpdateAllowed = info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            if (isUpdateAvailable && isUpdateAllowed) {
+                appUpdateManager.startUpdateFlowForResult(
+                    info,
+                    appUpdateResultLauncher,
+                    AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE)
+                )
+            }
+        }
+    }
 
     companion object {
         private const val TAG_EPISODE_UPDATE_JOB = "com.colisa.gopods.episodes"

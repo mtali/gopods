@@ -71,6 +71,8 @@ dependencies {
     def exoplayer_version = '2.19.1'
     def moshi_version = '1.15.0'
     def rss_parser_version = '6.0.0'
+    def app_update_version = '2.1.0'
+    def okhttp_version = '4.11.0'
 
 
     implementation "androidx.core:core-ktx:$core_version"
@@ -118,8 +120,11 @@ dependencies {
     kapt "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
 
     // OkHTTP
-    implementation "com.squareup.okhttp3:okhttp:4.11.0"
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'
+    implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
+
+    // App Update
+    implementation "com.google.android.play:app-update-ktx:$app_update_version"
 
     // RSS Parser
     implementation "com.prof18.rssparser:rssparser:$rss_parser_version"

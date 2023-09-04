@@ -53,5 +53,10 @@
     </string>
     <string name="action_cool">Cool</string>
 
+    <!--InApp updates-->
+    <string name="app_updated">Yay! Application updated successful</string>
+    <string name="app_update_failed">Ops! Failed to update the app</string>
+    <string name="app_update_required">This update is mandatory, it will be restarted soon</string>
+
 
 </resources>
