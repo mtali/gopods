@@ -114,7 +114,7 @@ class PodcastRepo(
             var count = podcasts.count()
             for (podcast in podcasts) {
                 val newEpisodes = getNewEpisodes(podcast)
-                if (newEpisodes.count() > 0) {
+                if (newEpisodes.isNotEmpty()) {
                     saveNewEpisodes(podcast.id!!, newEpisodes)
                     info.add(
                         PodcastUpdateInfo(

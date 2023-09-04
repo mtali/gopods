@@ -6,6 +6,7 @@ import com.colisa.podplay.logging.ReleaseTree
 import com.colisa.podplay.util.ThemeUtils
 import com.prof18.rssparser.RssParser
 import com.prof18.rssparser.RssParserBuilder
+import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.nio.charset.Charset
 
@@ -25,7 +26,10 @@ class GoApp : Application() {
         setTimber()
         prefs = GoPreferences(applicationContext)
         AppCompatDelegate.setDefaultNightMode(ThemeUtils.getDefaultNightMode(applicationContext))
-        rssParser = RssParserBuilder(charset = Charset.forName("ISO-8859-7")).build()
+        rssParser = RssParserBuilder(
+            charset = Charset.forName("ISO-8859-7"),
+            callFactory = OkHttpClient()
+        ).build()
     }
 
     private fun setTimber() {

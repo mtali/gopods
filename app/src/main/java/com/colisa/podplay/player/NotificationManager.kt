@@ -12,7 +12,11 @@ import com.bumptech.glide.request.RequestOptions
 import com.colisa.podplay.R
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val NOW_PAYING_CHANNEL_ID = "com.colisa.gopods.NOW_PLAYING"
 private const val NOW_PAYING_NOTIFICATION_ID = 0xb339
@@ -20,9 +24,8 @@ private const val NOW_PAYING_NOTIFICATION_ID = 0xb339
 class NotificationManager(
     private val context: Context,
     private val sessionToken: MediaSessionCompat.Token,
-    private val notificationListener: PlayerNotificationManager.NotificationListener
+    notificationListener: PlayerNotificationManager.NotificationListener
 ) {
-    private var player: Player? = null
     private val job = SupervisorJob()
     private val notifyScope = CoroutineScope(Dispatchers.Main + job)
     private val notificationManager: PlayerNotificationManager

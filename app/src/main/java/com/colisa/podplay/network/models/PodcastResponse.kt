@@ -17,7 +17,7 @@ data class PodcastResponse(
     )
 
     fun toPodcasts(): List<Podcast> {
-        return if (results.isNullOrEmpty()) {
+        return if (results.isEmpty()) {
             emptyList()
         } else {
             results
