@@ -1,20 +1,23 @@
 package com.colisa.podplay.data
 
 import com.colisa.podplay.db.GoDatabase
-import com.colisa.podplay.goRssParser
 import com.colisa.podplay.models.Episode
 import com.colisa.podplay.models.Podcast
 import com.colisa.podplay.network.api.FeedService
 import com.colisa.podplay.network.networkBoundResource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 
 class PodcastUpdateInfo(val feedUrl: String, val name: String, val newCount: Int)
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PodcastRepo(
     private var feedService: FeedService,
     private var db: GoDatabase,
@@ -86,8 +89,6 @@ class PodcastRepo(
     private suspend fun getNewEpisodes(podcast: Podcast): List<Episode> {
         return try {
             val newEpisodes = podcast.id?.let { id ->
-                // Clear cache - make sure fresh data not cached
-                goRssParser.flushCache(podcast.feedUrl)
                 val rs = feedService.fetchFeed(podcast.feedUrl)
                 val remote = rs.toEpisodes(id)
                 val local = podcastDao.loadEpisodes(id).first()
@@ -108,7 +109,7 @@ class PodcastRepo(
      */
     suspend fun checkNewEpisodes(): List<PodcastUpdateInfo>? = withContext(ioDispatcher) {
         val podcasts = podcastDao.loadSubscribedPodcastsStatic(subscribed = true)
-        if (!podcasts.isNullOrEmpty()) {
+        if (podcasts.isNotEmpty()) {
             val info = mutableListOf<PodcastUpdateInfo>()
             var count = podcasts.count()
             for (podcast in podcasts) {

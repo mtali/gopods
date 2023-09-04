@@ -4,19 +4,20 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import com.colisa.podplay.logging.ReleaseTree
 import com.colisa.podplay.util.ThemeUtils
-import com.prof.rssparser.Parser
+import com.prof18.rssparser.RssParser
+import com.prof18.rssparser.RssParserBuilder
 import timber.log.Timber
 import java.nio.charset.Charset
 
 
 val goPreferences: GoPreferences by lazy { GoApp.prefs }
-val goRssParser: Parser by lazy { GoApp.rssParser }
+val goRssParser: RssParser by lazy { GoApp.rssParser }
 
 class GoApp : Application() {
 
     companion object {
         lateinit var prefs: GoPreferences
-        lateinit var rssParser: Parser
+        lateinit var rssParser: RssParser
     }
 
     override fun onCreate() {
@@ -24,11 +25,7 @@ class GoApp : Application() {
         setTimber()
         prefs = GoPreferences(applicationContext)
         AppCompatDelegate.setDefaultNightMode(ThemeUtils.getDefaultNightMode(applicationContext))
-        rssParser = Parser.Builder()
-            .context(applicationContext)
-            .charset(Charset.forName("ISO-8859-7"))
-            .cacheExpirationMillis(24L * 60L * 60L * 100L) // One day
-            .build()
+        rssParser = RssParserBuilder(charset = Charset.forName("ISO-8859-7")).build()
     }
 
     private fun setTimber() {

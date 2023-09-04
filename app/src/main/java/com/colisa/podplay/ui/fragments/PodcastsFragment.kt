@@ -93,7 +93,6 @@ class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQuer
                     goViewModel.showSubscribed()
                     return true
                 }
-
             })
 
         }

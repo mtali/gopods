@@ -51,13 +51,13 @@ class RssFeedService : FeedService {
 
     override suspend fun fetchFeed(feedUrl: String): RssPodcast {
         try {
-            val channel = goRssParser.getChannel(feedUrl)
+            val channel = goRssParser.getRssChannel(feedUrl)
             val podcast = RssPodcast(
                 url = feedUrl,
                 title = channel.title ?: "",
                 description = channel.description ?: "",
                 lastBuildDate = channel.lastBuildDate ?: "",
-                episodes = channel.articles.map {
+                episodes = channel.items.map {
                     RssPodcast.RssEpisode(
                         author = it.author,
                         title = it.title,
