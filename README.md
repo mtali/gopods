@@ -3,7 +3,7 @@
 GoPods is a simple podcast app built 100% with Kotlin, the application allow live searching and
 playing podcasts from the internet.
 
-[![Get it on Google Play](https://play.google.com/store/apps/details?id=com.colisa.podplay)
+[![Get it on Google Play](https://media.lisk.com/init/google_store_912cd733ee.png?auto=compress,format&fit=max&w=96&q=80)](https://play.google.com/store/apps/details?id=com.colisa.podplay)
 
 ### Status: 🚧 In progress 🚧
 
