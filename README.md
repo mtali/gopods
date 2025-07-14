@@ -3,12 +3,6 @@
 GoPods is a simple podcast app built 100% with Kotlin, the application allow live searching and
 playing podcasts from the internet.
 
-[![Get it on Google Play](https://media.lisk.com/init/google_store_912cd733ee.png?auto=compress,format&fit=max&w=96&q=80)](https://play.google.com/store/apps/details?id=com.colisa.podplay)
-
-### Status: 🚧 In progress 🚧
-
-GoPods is still in the active of development. However, most of the app's architecture has been
-implemented, as well as the data layer, and early stages of dynamic theming.
 
 ### Download
 
@@ -19,12 +13,9 @@ If you want to clone the repo, open a terminal and type a git checkout command:
 ## Screenshots
 
 <p align="center">
-<img src="docs/home.jpeg" width="25%" height="25%"/>
-
-<img src="docs/notification.jpeg" width="25%" height="25%"/>
-
-
-<img src="docs/settings.jpeg" width="25%" height="25%"/>
+  <img src="docs/home.jpeg" width="250"/>
+  <img src="docs/notification.jpeg" width="250"/>
+  <img src="docs/settings.jpeg" width="250"/>
 </p>
 
 ## Features
