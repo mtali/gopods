@@ -2,14 +2,9 @@ plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.serialization)
-  // DataBinding needs kapt to pick up the @BindingAdapter functions. Both go away
-  // when the Compose UI replaces the layouts. Version comes from the Kotlin plugin
-  // already on the classpath.
-  id("org.jetbrains.kotlin.kapt")
+  alias(libs.plugins.compose.compiler)
   alias(libs.plugins.ksp)
   alias(libs.plugins.hilt)
-  // Safe Args stays until the fragments are replaced by Compose navigation.
-  alias(libs.plugins.androidx.navigation.safeargs)
   alias(libs.plugins.androidx.room)
 }
 
@@ -20,11 +15,10 @@ android {
   defaultConfig {
     applicationId = "com.colisa.podplay"
     minSdk = 24
-    // Stays on 34 until the Compose UI lands. Targeting 36 makes edge-to-edge
-    // mandatory, which the current View layouts do not handle.
+    // Moves to 36 with the edge to edge pass.
     targetSdk = 34
-    versionCode = 3
-    versionName = "1.1"
+    versionCode = 4
+    versionName = "2.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -51,7 +45,7 @@ android {
 
   buildFeatures {
     buildConfig = true
-    dataBinding = true
+    compose = true
   }
 
   packaging {
@@ -72,24 +66,41 @@ android {
 }
 
 dependencies {
-  implementation(libs.androidx.appcompat)
-  implementation(libs.androidx.constraintlayout)
+  // Compose
+  val composeBom = platform(libs.compose.bom)
+  implementation(composeBom)
+  androidTestImplementation(composeBom)
+  implementation(libs.compose.foundation)
+  implementation(libs.compose.material.icons.extended)
+  implementation(libs.compose.material3)
+  implementation(libs.compose.ui)
+  implementation(libs.compose.ui.graphics)
+  implementation(libs.compose.ui.tooling.preview)
+  debugImplementation(libs.compose.ui.tooling)
+  debugImplementation(libs.compose.ui.test.manifest)
+
+  // AndroidX
+  implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.core.ktx)
-  implementation(libs.androidx.lifecycle.livedata.ktx)
+  implementation(libs.androidx.core.splashscreen)
+  implementation(libs.androidx.lifecycle.runtime.compose)
+  implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.lifecycle.viewmodel.ktx)
-  implementation(libs.androidx.navigation.fragment.ktx)
-  implementation(libs.androidx.navigation.ui.ktx)
-  implementation(libs.androidx.preference.ktx)
-  implementation(libs.androidx.swiperefreshlayout)
-  implementation(libs.google.material)
+
+  // Navigation 3
+  implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+  implementation(libs.androidx.navigation3.runtime)
+  implementation(libs.androidx.navigation3.ui)
 
   // Dependency injection
+  implementation(libs.androidx.hilt.navigation.compose)
   implementation(libs.androidx.hilt.work)
   implementation(libs.hilt.android)
   ksp(libs.androidx.hilt.compiler)
   ksp(libs.hilt.compiler)
 
   // Persistence
+  implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   ksp(libs.androidx.room.compiler)
@@ -113,18 +124,9 @@ dependencies {
   implementation(libs.retrofit.serialization.converter)
   implementation(libs.rssparser)
 
-  // Serialization
-  implementation(libs.moshi.kotlin)
-  ksp(libs.moshi.kotlin.codegen)
-
   // Images
-  implementation(libs.glide)
-
-  // UI
-  implementation(libs.halfbit.edge.to.edge)
-  implementation(libs.material.dialogs.bottomsheets)
-  implementation(libs.material.dialogs.core)
-  implementation(libs.readmore.textview)
+  implementation(libs.coil.compose)
+  implementation(libs.coil.network.okhttp)
 
   // Misc
   implementation(libs.play.app.update.ktx)
@@ -133,4 +135,5 @@ dependencies {
   testImplementation(libs.junit)
   androidTestImplementation(libs.androidx.test.espresso.core)
   androidTestImplementation(libs.androidx.test.ext.junit)
+  androidTestImplementation(libs.compose.ui.test.junit4)
 }

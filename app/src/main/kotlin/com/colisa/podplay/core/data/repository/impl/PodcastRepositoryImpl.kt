@@ -67,6 +67,10 @@ class PodcastRepositoryImpl @Inject constructor(
     onFetchFailed = { Timber.e(it, "Failed to refresh feed $url") },
   ).flowOn(ioDispatcher)
 
+  override suspend fun getPodcast(feedUrl: String): Podcast? = withContext(ioDispatcher) {
+    podcastDao.getPodcast(feedUrl)?.asPodcast()
+  }
+
   override suspend fun subscribePodcast(podcast: Podcast, subscribed: Boolean) {
     withContext(ioDispatcher) {
       podcastDao.updatePodcasts(podcast.copy(subscribed = subscribed).asEntity())

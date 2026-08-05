@@ -9,13 +9,21 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.colisa.podplay.app.goPreferences
+import com.colisa.podplay.core.datastore.PreferencesDataSource
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 /**
  * Media3 owns the notification, lock screen controls, audio focus, media buttons and
  * the foreground service lifecycle, so none of that is handled here.
  */
+@AndroidEntryPoint
 class PlaybackService : MediaSessionService() {
+
+  @Inject
+  lateinit var preferencesDataSource: PreferencesDataSource
 
   private var mediaSession: MediaSession? = null
 
@@ -28,7 +36,11 @@ class PlaybackService : MediaSessionService() {
       .setUsage(C.USAGE_MEDIA)
       .build()
 
-    val seekStepMs = goPreferences.fastSeekingStep * 1000L
+    // One read at service start. The in app controls read the current value on
+    // every seek; this only sets the step used by the notification buttons.
+    val seekStepMs = runBlocking {
+      preferencesDataSource.userPreferences.first().fastSeekSeconds * 1000L
+    }
 
     val player = ExoPlayer.Builder(this)
       .setAudioAttributes(audioAttributes, true)

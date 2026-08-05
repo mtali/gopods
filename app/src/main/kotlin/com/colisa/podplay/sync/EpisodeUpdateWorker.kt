@@ -7,19 +7,20 @@ import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.colisa.podplay.R
-import com.colisa.podplay.app.goPreferences
+import com.colisa.podplay.app.MainActivity
+import com.colisa.podplay.core.common.exts.notificationManager
 import com.colisa.podplay.core.data.repository.PodcastRepository
 import com.colisa.podplay.core.data.repository.PodcastUpdateInfo
-import com.colisa.podplay.extensions.notificationManager
-import com.colisa.podplay.ui.MainActivity
-import com.colisa.podplay.util.Utils
+import com.colisa.podplay.core.datastore.PreferencesDataSource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
 @HiltWorker
@@ -27,11 +28,12 @@ class EpisodeUpdateWorker @AssistedInject constructor(
   @Assisted context: Context,
   @Assisted params: WorkerParameters,
   private val podcastRepository: PodcastRepository,
+  private val preferencesDataSource: PreferencesDataSource,
 ) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
     val updates = podcastRepository.checkNewEpisodes()
-    if (!goPreferences.notifyEpisodeUpdates) {
+    if (!preferencesDataSource.userPreferences.first().notifyNewEpisodes) {
       Timber.d("Episode update notification disabled")
       return Result.success()
     }
@@ -43,7 +45,7 @@ class EpisodeUpdateWorker @AssistedInject constructor(
   }
 
   private fun createNotificationChannel() {
-    if (!Utils.isOreo()) return
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val manager = applicationContext.notificationManager()
     if (manager.getNotificationChannel(EPISODE_CHANNEL_ID) == null) {
       manager.createNotificationChannel(

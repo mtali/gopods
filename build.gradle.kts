@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 // Lists all plugins used throughout the project without applying them.
 plugins {
   alias(libs.plugins.android.application) apply false
-  alias(libs.plugins.androidx.navigation.safeargs) apply false
   alias(libs.plugins.androidx.room) apply false
   alias(libs.plugins.hilt) apply false
   alias(libs.plugins.kotlin.android) apply false

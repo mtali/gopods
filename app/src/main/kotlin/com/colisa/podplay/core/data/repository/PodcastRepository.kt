@@ -12,6 +12,8 @@ interface PodcastRepository {
 
   fun getPodcastFeed(url: String): Flow<Result<Podcast>>
 
+  suspend fun getPodcast(feedUrl: String): Podcast?
+
   suspend fun subscribePodcast(podcast: Podcast, subscribed: Boolean)
 
   suspend fun deletePodcast(podcast: Podcast)

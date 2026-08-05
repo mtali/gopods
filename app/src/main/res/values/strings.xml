@@ -43,8 +43,8 @@
 
     <!--Episode - Settings -->
     <string name="pref_episode_notify_title">Episode updates notifications</string>
-    <string name="pref_episode_notify_summary_on">Hide notifications</string>
-    <string name="pref_episode_notify_summary_off">Show notifications</string>
+    <string name="pref_episode_notify_summary_on">You will hear about new episodes</string>
+    <string name="pref_episode_notify_summary_off">Notifications are off</string>
 
     <!--Fast seeking - Settings-->
     <string name="pref_fast_seeking_summary">Fast forward/rewind step (seconds)</string>
@@ -59,4 +59,26 @@
     <string name="app_update_required">This update is mandatory, it will be restarted soon</string>
 
 
+
+    <!--Compose UI-->
+    <string name="library">Library</string>
+    <string name="discover">Discover</string>
+    <string name="now_playing">Now playing</string>
+    <string name="back">Back</string>
+    <string name="search_podcasts">Search podcasts</string>
+    <string name="clear_search">Clear search</string>
+    <string name="error_generic_title">Something went wrong</string>
+    <string name="action_retry">Retry</string>
+    <string name="discover_empty_title">Find a podcast</string>
+    <string name="discover_empty_message">Search by name, topic or author</string>
+    <string name="discover_no_results">No podcasts found</string>
+    <string name="no_episodes">No episodes yet</string>
+    <string name="buffering">Buffering…</string>
+    <string name="read_more">Read more</string>
+    <string name="read_less">Read less</string>
+    <string name="episodes">Episodes</string>
+    <string name="pref_dynamic_color_title">Dynamic colour</string>
+    <string name="pref_dynamic_color_summary">Use colours from your wallpaper</string>
+    <string name="pref_fast_seeking_value">%1$d seconds</string>
+    <string name="notification_permission_rationale">Allow notifications to hear about new episodes</string>
 </resources>

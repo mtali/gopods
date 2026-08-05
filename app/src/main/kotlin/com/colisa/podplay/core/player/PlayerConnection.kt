@@ -11,7 +11,8 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.colisa.podplay.app.goPreferences
+import com.colisa.podplay.core.datastore.PreferencesDataSource
+import com.colisa.podplay.core.datastore.UserPreferences
 import com.colisa.podplay.core.dispatchers.Dispatcher
 import com.colisa.podplay.core.dispatchers.GoDispatchers.Main
 import com.colisa.podplay.core.models.NowPlayingEpisode
@@ -49,6 +50,7 @@ private const val POSITION_TICK_MS = 500L
 class PlayerConnection @Inject constructor(
   @param:ApplicationContext private val context: Context,
   @param:Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher,
+  private val preferencesDataSource: PreferencesDataSource,
 ) {
 
   private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
@@ -60,8 +62,25 @@ class PlayerConnection @Inject constructor(
   /** Set when play is requested before the controller has finished connecting. */
   private var pendingEpisode: NowPlayingEpisode? = null
 
-  private val _state = MutableStateFlow(PlayerUiState(episode = goPreferences.latestEpisode))
+  private val _state = MutableStateFlow(PlayerUiState())
   val state: StateFlow<PlayerUiState> = _state.asStateFlow()
+
+  /** Cached so the seek step is available without suspending. */
+  private var settings = UserPreferences()
+
+  init {
+    scope.launch {
+      preferencesDataSource.userPreferences.collect { preferences ->
+        settings = preferences
+        // Restores the mini player after a cold start, before playback begins.
+        if (_state.value.episode == null) {
+          preferences.lastEpisode?.let { last ->
+            _state.update { it.copy(episode = last) }
+          }
+        }
+      }
+    }
+  }
 
   private val _errors = MutableSharedFlow<String>(
     replay = 0,
@@ -114,7 +133,7 @@ class PlayerConnection @Inject constructor(
   }
 
   fun play(episode: NowPlayingEpisode) {
-    goPreferences.latestEpisode = episode
+    scope.launch { preferencesDataSource.setLastEpisode(episode) }
     _state.update { it.copy(episode = episode) }
 
     val active = controller
@@ -142,7 +161,7 @@ class PlayerConnection @Inject constructor(
       return
     }
     if (active.currentMediaItem == null) {
-      goPreferences.latestEpisode?.let { play(it) }
+      _state.value.episode?.let { play(it) }
       return
     }
     active.play()
@@ -154,7 +173,7 @@ class PlayerConnection @Inject constructor(
    */
   fun seekBy(forward: Boolean) {
     val active = controller ?: return
-    val step = goPreferences.fastSeekingStep * 1000L
+    val step = settings.fastSeekSeconds * 1000L
     val target = active.currentPosition + if (forward) step else -step
     seekTo(target)
   }

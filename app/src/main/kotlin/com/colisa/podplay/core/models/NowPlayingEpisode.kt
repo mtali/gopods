@@ -1,17 +1,20 @@
 package com.colisa.podplay.core.models
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
 /**
  * Metadata for the episode loaded in the player. Persisted so the mini player can
  * render before the media controller has connected.
+ *
+ * Field names match what the previous Moshi based storage wrote, so an episode saved
+ * by an older install still reads back.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class NowPlayingEpisode(
-  var title: String = "",
-  var artUrl: String = "",
-  var artUrl600: String = "",
-  var mediaUrl: String = "",
-  var description: String = "",
-  var podcastTitle: String = "",
+  val title: String = "",
+  val artUrl: String = "",
+  val artUrl600: String = "",
+  val mediaUrl: String = "",
+  val description: String = "",
+  val podcastTitle: String = "",
 )

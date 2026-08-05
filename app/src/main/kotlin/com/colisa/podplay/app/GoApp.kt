@@ -1,22 +1,31 @@
 package com.colisa.podplay.app
 
 import android.app.Application
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.disk.directory
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.crossfade
 import com.colisa.podplay.BuildConfig
-import com.colisa.podplay.GoPreferences
-import com.colisa.podplay.logging.ReleaseTree
-import com.colisa.podplay.util.ThemeUtils
+import com.colisa.podplay.core.logs.ReleaseTree
 import dagger.hilt.android.HiltAndroidApp
+import okhttp3.Call
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltAndroidApp
-class GoApp : Application(), Configuration.Provider {
+class GoApp : Application(), Configuration.Provider, SingletonImageLoader.Factory {
 
   @Inject
   lateinit var workerFactory: HiltWorkerFactory
+
+  /** Shared with the api layer so artwork and feeds use one connection pool. */
+  @Inject
+  lateinit var callFactory: Call.Factory
 
   override val workManagerConfiguration: Configuration
     get() = Configuration.Builder()
@@ -25,12 +34,6 @@ class GoApp : Application(), Configuration.Provider {
 
   override fun onCreate() {
     super.onCreate()
-    setTimber()
-    prefs = GoPreferences(applicationContext)
-    AppCompatDelegate.setDefaultNightMode(ThemeUtils.getDefaultNightMode(applicationContext))
-  }
-
-  private fun setTimber() {
     if (BuildConfig.DEBUG) {
       Timber.plant(Timber.DebugTree())
     } else {
@@ -38,14 +41,17 @@ class GoApp : Application(), Configuration.Provider {
     }
   }
 
-  companion object {
-    lateinit var prefs: GoPreferences
+  override fun newImageLoader(context: PlatformContext): ImageLoader {
+    return ImageLoader.Builder(context)
+      .components {
+        add(OkHttpNetworkFetcherFactory(callFactory = { callFactory }))
+      }
+      .diskCache {
+        DiskCache.Builder()
+          .directory(cacheDir.resolve("image_cache"))
+          .build()
+      }
+      .crossfade(true)
+      .build()
   }
 }
-
-/**
- * Still a global because the androidx.preference settings screen reads and writes
- * SharedPreferences directly. Replaced by a DataStore backed source when that
- * screen becomes Compose.
- */
-val goPreferences: GoPreferences by lazy { GoApp.prefs }
