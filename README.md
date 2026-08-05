@@ -13,14 +13,14 @@ If you want to clone the repo, open a terminal and type a git checkout command:
 ## Screenshots
 
 <p align="center">
-  <img src="store/screenshots/01-library.jpg" width="240"/>
-  <img src="store/screenshots/02-discover.jpg" width="240"/>
-  <img src="store/screenshots/03-details.jpg" width="240"/>
+  <img src="docs/store/screenshots/01-library.jpg" width="240"/>
+  <img src="docs/store/screenshots/02-discover.jpg" width="240"/>
+  <img src="docs/store/screenshots/03-details.jpg" width="240"/>
 </p>
 <p align="center">
-  <img src="store/screenshots/04-now-playing.jpg" width="240"/>
-  <img src="store/screenshots/05-settings.jpg" width="240"/>
-  <img src="store/screenshots/06-lockscreen.jpg" width="240"/>
+  <img src="docs/store/screenshots/04-now-playing.jpg" width="240"/>
+  <img src="docs/store/screenshots/05-settings.jpg" width="240"/>
+  <img src="docs/store/screenshots/06-lockscreen.jpg" width="240"/>
 </p>
 
 ## Features
@@ -59,13 +59,13 @@ Requires Android 7.0 (API 24) or newer.
 
 ## Play Store assets
 
-Everything the listing needs lives in `store/`:
+Everything the listing needs lives in `docs/store/`:
 
 ```
-store/short-description.txt   80 character limit
-store/long-description.txt    4000 character limit
-store/feature-graphic.png     1024x500, no alpha
-store/screenshots/            the set above, also used by this readme
+docs/store/short-description.txt   80 character limit
+docs/store/long-description.txt    4000 character limit
+docs/store/feature-graphic.png     1024x500, no alpha
+docs/store/screenshots/            the set above, also used by this readme
 ```
 
 To retake a screenshot, open that screen on a device and run:

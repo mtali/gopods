@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the Play Store feature graphic at store/feature-graphic.png.
+"""Builds the Play Store feature graphic at docs/store/feature-graphic.png.
 
 1024x500, no alpha channel, which is what the Play Console accepts. Generated rather
 than drawn by hand so it can be rebuilt when the screenshots or the brand colour
@@ -37,8 +37,8 @@ FONT_BOLD = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 FONT_REGULAR = "/System/Library/Fonts/Supplemental/Arial.ttf"
 
 ROOT = Path(__file__).resolve().parent.parent
-SHOTS = ROOT / "store" / "screenshots"
-OUT = ROOT / "store" / "feature-graphic.png"
+SHOTS = ROOT / "docs" / "store" / "screenshots"
+OUT = ROOT / "docs" / "store" / "feature-graphic.png"
 
 TITLE = "GoPods"
 TAGLINE = "Podcasts, simply played"
