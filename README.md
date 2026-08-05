@@ -66,7 +66,6 @@ store/short-description.txt   80 character limit
 store/long-description.txt    4000 character limit
 store/feature-graphic.png     1024x500, no alpha
 store/screenshots/            the set above, also used by this readme
-store/photos/                 lossless captures, git ignored
 ```
 
 To retake a screenshot, open that screen on a device and run:

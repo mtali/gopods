@@ -1,122 +1,166 @@
 #!/usr/bin/env python3
 """Builds the Play Store feature graphic at store/feature-graphic.png.
 
-1024x500 with no alpha channel, which is what the Play Console accepts. Generated
-rather than drawn by hand so it can be rebuilt when the screenshots or the brand
-colour change:
+1024x500, no alpha channel, which is what the Play Console accepts. Generated rather
+than drawn by hand so it can be rebuilt when the screenshots or the brand colour
+change:
 
     python3 scripts/feature_graphic.py
 
-Text is kept well inside the edges because the Console overlays controls near them
-and crops the graphic differently across surfaces.
+Gradients are built small and scaled up with bicubic, which is smooth and far quicker
+than a per pixel loop in Python.
+
+Copy is measured and the artwork is fitted into what is left, then the script fails if
+they would collide. Earlier hand placed versions had the title running underneath the
+phones.
 """
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 WIDTH, HEIGHT = 1024, 500
 MARGIN = 64
 
-# Seeded from the app's fallback primary, the deep purple the app shipped with.
-TOP_LEFT = (103, 80, 164)
-BOTTOM_RIGHT = (36, 22, 66)
+# Deep violet through to the app's primary purple, with a lighter accent for the glow.
+CORNERS = {
+    "top_left": (46, 22, 92),
+    "top_right": (108, 74, 190),
+    "bottom_left": (24, 12, 48),
+    "bottom_right": (72, 42, 140),
+}
+GLOW = (156, 122, 255)
+TITLE_COLOUR = (255, 255, 255)
+TAGLINE_COLOUR = (214, 200, 255)
 
 FONT_BOLD = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 FONT_REGULAR = "/System/Library/Fonts/Supplemental/Arial.ttf"
 
 ROOT = Path(__file__).resolve().parent.parent
-PHOTOS = ROOT / "store" / "photos"
+SHOTS = ROOT / "store" / "screenshots"
 OUT = ROOT / "store" / "feature-graphic.png"
 
-PHONES = ["01-library.png", "04-now-playing.png"]
-PHONE_MAX_HEIGHT = 384
-TEXT_GUTTER = 48
-PHONE_RADIUS = 22
-PHONE_GAP = 20
+TITLE = "GoPods"
+TAGLINE = "Podcasts, simply played"
+
+# Front phone last so it lands on top. Each has its own tilt for a bit of movement.
+PHONES = [("04-now-playing.jpg", 7.0), ("01-library.jpg", -5.0)]
+PHONE_MAX_HEIGHT = 372
+PHONE_RADIUS = 26
+PHONE_OVERLAP = 74
+TEXT_GUTTER = 40
+
+# Mirrors the equalizer bars the app shows beside a playing episode.
+WAVEFORM = [0.30, 0.62, 0.42, 0.88, 0.55, 1.0, 0.70, 0.38, 0.80, 0.48, 0.26]
 
 
-def gradient() -> Image.Image:
-    """Diagonal gradient, drawn per pixel row and column via a small blend."""
-    base = Image.new("RGB", (WIDTH, HEIGHT), TOP_LEFT)
-    draw = ImageDraw.Draw(base)
-    for y in range(HEIGHT):
-        for_x = y / max(HEIGHT - 1, 1)
-        # Blend along the diagonal by mixing the row's progress with the column's.
-        start = tuple(
-            int(TOP_LEFT[c] + (BOTTOM_RIGHT[c] - TOP_LEFT[c]) * for_x * 0.55)
-            for c in range(3)
+def background() -> Image.Image:
+    """Four corner blend, built at 2x2 and scaled up."""
+    small = Image.new("RGB", (2, 2))
+    small.putpixel((0, 0), CORNERS["top_left"])
+    small.putpixel((1, 0), CORNERS["top_right"])
+    small.putpixel((0, 1), CORNERS["bottom_left"])
+    small.putpixel((1, 1), CORNERS["bottom_right"])
+    canvas = small.resize((WIDTH, HEIGHT), Image.BICUBIC)
+
+    # A soft pool of light behind the artwork, so the phones sit in something rather
+    # than floating on a flat panel.
+    halo = Image.radial_gradient("L").resize((900, 900), Image.BICUBIC)
+    halo = Image.eval(halo, lambda v: max(0, 190 - v))
+    tint = Image.new("RGB", halo.size, GLOW)
+    canvas.paste(tint, (int(WIDTH * 0.58), -210), halo)
+    return canvas
+
+
+def waveform(canvas: Image.Image, left: int, baseline: int) -> None:
+    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    bar_width, gap, tallest = 7, 11, 62
+    x = left
+    for value in WAVEFORM:
+        height = int(tallest * value)
+        draw.rounded_rectangle(
+            [x, baseline - height, x + bar_width, baseline],
+            radius=bar_width // 2,
+            fill=(255, 255, 255, 64),
         )
-        end = tuple(
-            int(TOP_LEFT[c] + (BOTTOM_RIGHT[c] - TOP_LEFT[c]) * min(for_x * 0.55 + 0.45, 1.0))
-            for c in range(3)
-        )
-        for x in range(0, WIDTH, 8):
-            t = x / max(WIDTH - 1, 1)
-            colour = tuple(int(start[c] + (end[c] - start[c]) * t) for c in range(3))
-            draw.rectangle([x, y, x + 8, y + 1], fill=colour)
-    return base
+        x += bar_width + gap
+    canvas.paste(layer, (0, 0), layer)
 
 
-def rounded(image: Image.Image, radius: int) -> Image.Image:
-    mask = Image.new("L", image.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle([0, 0, image.size[0], image.size[1]], radius, fill=255)
-    out = image.convert("RGBA")
-    out.putalpha(mask)
-    return out
-
-
-def phone(name: str, height: int) -> Image.Image | None:
-    path = PHOTOS / name
+def phone(name: str, height: int, tilt: float) -> Image.Image | None:
+    path = SHOTS / name
     if not path.exists():
         print(f"skipping missing {path}")
         return None
+
     shot = Image.open(path).convert("RGB")
     width = int(shot.width * height / shot.height)
-    return rounded(shot.resize((width, height), Image.LANCZOS), PHONE_RADIUS)
+    shot = shot.resize((width, height), Image.LANCZOS)
+
+    mask = Image.new("L", shot.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, width, height], PHONE_RADIUS, fill=255)
+    framed = shot.convert("RGBA")
+    framed.putalpha(mask)
+
+    # A hairline edge keeps a dark screenshot from bleeding into a dark background.
+    ImageDraw.Draw(framed).rounded_rectangle(
+        [0, 0, width - 1, height - 1], PHONE_RADIUS, outline=(255, 255, 255, 70), width=2
+    )
+    return framed.rotate(tilt, expand=True, resample=Image.BICUBIC)
+
+
+def drop_shadow(canvas: Image.Image, art: Image.Image, x: int, y: int) -> None:
+    pad = 40
+    layer = Image.new("RGBA", (art.width + pad * 2, art.height + pad * 2), (0, 0, 0, 0))
+    layer.paste(Image.new("RGBA", art.size, (0, 0, 0, 130)), (pad, pad), art)
+    layer = layer.filter(ImageFilter.GaussianBlur(18))
+    canvas.paste(layer, (x - pad, y - pad + 12), layer)
 
 
 def main() -> None:
-    canvas = gradient()
+    canvas = background()
     draw = ImageDraw.Draw(canvas)
 
-    title_font = ImageFont.truetype(FONT_BOLD, 96)
-    tagline_font = ImageFont.truetype(FONT_REGULAR, 34)
-    title, tagline = "GoPods", "Podcasts, simply played"
+    title_font = ImageFont.truetype(FONT_BOLD, 104)
+    tagline_font = ImageFont.truetype(FONT_REGULAR, 33)
 
-    # Measure the copy and give the phones whatever is left, rather than guessing a
-    # width and having the title run underneath them.
     text_right = MARGIN + max(
-        draw.textlength(title, font=title_font),
-        draw.textlength(tagline, font=tagline_font),
+        draw.textlength(TITLE, font=title_font),
+        draw.textlength(TAGLINE, font=tagline_font),
     )
     available = WIDTH - MARGIN - (text_right + TEXT_GUTTER)
 
     ratio = 1080 / 2400
-    per_phone = (available - PHONE_GAP * (len(PHONES) - 1)) / len(PHONES)
+    span = len(PHONES) - 1
+    per_phone = (available + PHONE_OVERLAP * span) / len(PHONES)
     height = min(PHONE_MAX_HEIGHT, int(per_phone / ratio))
 
-    shots = [s for s in (phone(n, height) for n in PHONES) if s is not None]
+    shots = [(phone(name, height, tilt), tilt) for name, tilt in PHONES]
+    shots = [(art, tilt) for art, tilt in shots if art is not None]
+
     if shots:
-        y = (HEIGHT - height) // 2
-        total = sum(s.width for s in shots) + PHONE_GAP * (len(shots) - 1)
-        x = WIDTH - MARGIN - total
-        if x < text_right + TEXT_GUTTER:
-            raise SystemExit(f"phones would overlap the copy: {x} < {text_right + TEXT_GUTTER}")
-        for shot in shots:
-            shadow = Image.new("RGBA", (shot.width + 24, shot.height + 24), (0, 0, 0, 0))
-            ImageDraw.Draw(shadow).rounded_rectangle(
-                [12, 12, shot.width + 12, shot.height + 12], PHONE_RADIUS, fill=(0, 0, 0, 70)
+        total = sum(art.width for art, _ in shots) - PHONE_OVERLAP * (len(shots) - 1)
+        start = WIDTH - MARGIN - total
+        if start < text_right + TEXT_GUTTER:
+            raise SystemExit(
+                f"artwork would overlap the copy: starts at {start}, "
+                f"copy needs up to {int(text_right + TEXT_GUTTER)}"
             )
-            canvas.paste(shadow, (x - 12, y - 12), shadow)
-            canvas.paste(shot, (x, y), shot)
-            x += shot.width + PHONE_GAP
-        print(f"phones {height}px tall starting at x={WIDTH - MARGIN - total}, copy ends at {int(text_right)}")
+        x = start
+        for art, _ in shots:
+            y = (HEIGHT - art.height) // 2
+            drop_shadow(canvas, art, x, y)
+            canvas.paste(art, (x, y), art)
+            x += art.width - PHONE_OVERLAP
+        print(f"artwork {height}px tall from x={start}, copy ends at {int(text_right)}")
 
-    draw.text((MARGIN, 176), title, font=title_font, fill=(255, 255, 255))
-    draw.text((MARGIN + 4, 292), tagline, font=tagline_font, fill=(226, 216, 255))
+    draw = ImageDraw.Draw(canvas)
+    draw.text((MARGIN, 150), TITLE, font=title_font, fill=TITLE_COLOUR)
+    draw.text((MARGIN + 5, 272), TAGLINE, font=tagline_font, fill=TAGLINE_COLOUR)
+    waveform(canvas, left=MARGIN + 5, baseline=400)
 
-    # No alpha: the Console rejects a graphic with a transparency channel.
+    # No alpha: the Console rejects a graphic carrying a transparency channel.
     canvas.convert("RGB").save(OUT, "PNG")
     print(f"wrote {OUT.relative_to(ROOT)} {canvas.size[0]}x{canvas.size[1]}")
 

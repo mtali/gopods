@@ -23,7 +23,6 @@
 
 set -euo pipefail
 
-RAW_DIR="store/photos"
 OUT_DIR="store/screenshots"
 JPEG_QUALITY=82
 PIN=1234
@@ -32,6 +31,19 @@ usage() {
   echo "usage: $0 [--lock] <name>" >&2
   exit 1
 }
+
+# One handler for everything, because a second trap on EXIT silently replaces the
+# first and the screen lock would be left behind.
+TMP=""
+LOCK_SET=false
+cleanup() {
+  [[ -n "$TMP" ]] && rm -rf "$TMP"
+  if [[ "$LOCK_SET" == true ]]; then
+    echo "🔓 clearing the temporary screen lock"
+    adb shell locksettings clear --old "$PIN" >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup EXIT
 
 LOCK=false
 if [[ "${1:-}" == "--lock" ]]; then
@@ -45,14 +57,14 @@ command -v adb >/dev/null || { echo "adb not on PATH" >&2; exit 1; }
 command -v sips >/dev/null || { echo "sips not found, this script expects macOS" >&2; exit 1; }
 adb get-state >/dev/null 2>&1 || { echo "no device or emulator attached" >&2; exit 1; }
 
-mkdir -p "$RAW_DIR" "$OUT_DIR"
+mkdir -p "$OUT_DIR"
 
 if [[ "$LOCK" == true ]]; then
   # Without a screen lock the emulator wakes straight back into the app, so the media
   # controls never appear on a lock screen. Set one, sleep, wake, shoot, then undo it.
   echo "🔒 setting a temporary screen lock"
   adb shell locksettings set-pin "$PIN" >/dev/null
-  trap 'echo "🔓 clearing the temporary screen lock"; adb shell locksettings clear --old '"$PIN"' >/dev/null 2>&1 || true' EXIT
+  LOCK_SET=true
   adb shell input keyevent 26
   sleep 3
   adb shell input keyevent 26
@@ -60,20 +72,21 @@ if [[ "$LOCK" == true ]]; then
 fi
 
 echo "📸 capturing $NAME"
+# The png is a working file. Keeping it alongside the jpeg was the same picture
+# twice, so it is converted and thrown away.
+TMP=$(mktemp -d)
+PNG="$TMP/shot.png"
 adb shell screencap -p /sdcard/capture.png
-adb pull -q /sdcard/capture.png "$RAW_DIR/$NAME.png" >/dev/null 2>&1 \
-  || adb pull /sdcard/capture.png "$RAW_DIR/$NAME.png" >/dev/null
+adb pull -q /sdcard/capture.png "$PNG" >/dev/null 2>&1 || adb pull /sdcard/capture.png "$PNG" >/dev/null
 adb shell rm -f /sdcard/capture.png
 
-sips -s format jpeg -s formatOptions "$JPEG_QUALITY" \
-  "$RAW_DIR/$NAME.png" --out "$OUT_DIR/$NAME.jpg" >/dev/null
+sips -s format jpeg -s formatOptions "$JPEG_QUALITY" "$PNG" --out "$OUT_DIR/$NAME.jpg" >/dev/null
 
 SIZE=$(du -h "$OUT_DIR/$NAME.jpg" | cut -f1)
 DIMS=$(sips -g pixelWidth -g pixelHeight "$OUT_DIR/$NAME.jpg" \
   | awk '/pixelWidth/ {w=$2} /pixelHeight/ {h=$2} END {print w"x"h}')
 
 echo "✅ $OUT_DIR/$NAME.jpg  $DIMS  $SIZE"
-echo "   lossless copy in $RAW_DIR/$NAME.png (git ignored)"
 
 # The captures are the device's native size, which on a modern phone is taller than
 # 9:16. If the Play Console objects to the aspect ratio, crop rather than scale so the

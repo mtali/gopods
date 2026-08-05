@@ -21,7 +21,3 @@ local.properties
 # Release signing
 /keystore/keystore.properties
 /keystore/*.jks
-
-# Lossless captures. The optimised set in store/screenshots is tracked, since the
-# readme renders it and the Play listing uses it.
-/store/photos/

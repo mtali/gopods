@@ -1,40 +1,15 @@
-GoPods is a podcast player that stays out of your way. Search the iTunes catalogue,
-subscribe to what you like, and listen.
+A podcast player that stays out of your way. Search, subscribe, listen.
 
-LISTENING
-- Background playback that keeps going after you leave the app
-- Controls on your lock screen and in the notification shade
-- Playback speed from 0.8x to 2x
-- Skip forward and back by a step you choose, anywhere from 5 to 60 seconds
-- Episode notes sit under the player, so you can read what an episode is about
+🎧 Background playback with lock screen and notification controls
+⏩ Speed from 0.8x to 2x, and a skip step you choose
+📝 Episode notes right under the player
+🔍 Search the iTunes catalogue, with recent searches one tap away
+🔔 Told about new episodes, unless you turn that off
+📶 Opens with your shows already there, and says so plainly when you are offline
+🎨 Material You colours, light or dark, a rail on tablets
+✅ No account, no ads, no tracking. Open source.
 
-FINDING SHOWS
-- Search the iTunes podcast catalogue
-- Recent searches are one tap away
-- Subscribe, and your library becomes a grid of cover art
-
-NEW EPISODES
-- GoPods checks your subscriptions and tells you when there is something new
-- Turn that off in settings if you would rather not be told
-
-ON A POOR CONNECTION
-- Your subscriptions and episode lists are kept on the device, so the app opens with
-  content rather than a spinner
-- Lose signal and GoPods says so instead of hanging, then loads on its own once you
-  are back
-
-FITS YOUR PHONE
-- Material You, so colours follow your wallpaper on Android 12 and newer
-- Light, dark, or follow the system
-- Tablets and landscape get a navigation rail instead of a bottom bar
-
-NO STRINGS
-- No account
-- No ads
-- No analytics and no tracking of any kind
-- Open source: github.com/mtali/gopods
+Episodes stream. Saving them for offline listening is not supported yet.
 
 Requires Android 7.0 or newer.
-
-One thing to know: GoPods streams episodes. Saving episodes for offline listening is
-not supported yet.
+github.com/mtali/gopods
