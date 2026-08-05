@@ -1,0 +1,11 @@
+Version 2.0 is a rebuild of the whole app.
+
+• A new interface, artwork leading, Material You colours, light or dark
+• Playback rebuilt on Media3, with steadier lock screen controls
+• Discover has a real search bar, and keeps your recent searches
+• Clearer episode lists, readable dates, a calmer mini player
+• Opens with your shows already there, and says when you are offline
+• A rail instead of a bottom bar on tablets
+• Updated for Android 16
+
+No account, no ads, no tracking.
