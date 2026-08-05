@@ -1,6 +1,5 @@
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.ksp)
@@ -10,7 +9,9 @@ plugins {
 
 android {
   namespace = "com.colisa.podplay"
-  compileSdk = 36
+  compileSdk {
+    version = release(37)
+  }
 
   defaultConfig {
     applicationId = "com.colisa.podplay"
@@ -21,10 +22,6 @@ android {
     versionName = "2.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  room {
-    schemaDirectory("$projectDir/schemas")
   }
 
   buildTypes {
@@ -63,6 +60,11 @@ android {
       enableSplit = false
     }
   }
+}
+
+// Export a json schema per database version.
+room {
+  schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {
