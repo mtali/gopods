@@ -13,22 +13,29 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,13 +74,16 @@ fun PodcastDetailsScreen(
   onPlayEpisode: (EpisodeUi) -> Unit,
 ) {
   val podcast = (uiState as? PodcastDetailsUiState.Success)?.podcast
+  val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
   Scaffold(
+    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       TopAppBar(
+        // The hero below carries the title, so the bar only names it once scrolled.
         title = {
           Text(
-            text = podcast?.title ?: stringResource(R.string.podcast),
+            text = podcast?.title.orEmpty(),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
@@ -86,22 +96,11 @@ fun PodcastDetailsScreen(
             )
           }
         },
-        actions = {
-          if (podcast != null) {
-            IconButton(onClick = onToggleSubscribe) {
-              Icon(
-                imageVector = if (podcast.subscribed) {
-                  Icons.Filled.Bookmark
-                } else {
-                  Icons.Outlined.BookmarkBorder
-                },
-                contentDescription = stringResource(
-                  if (podcast.subscribed) R.string.unsubscribe else R.string.subscribe
-                ),
-              )
-            }
-          }
-        },
+        colors = TopAppBarDefaults.topAppBarColors(
+          containerColor = MaterialTheme.colorScheme.surface,
+          scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+        scrollBehavior = scrollBehavior,
       )
     },
   ) { padding ->
@@ -128,6 +127,8 @@ fun PodcastDetailsScreen(
       ) {
         EpisodeList(
           podcast = uiState.podcast,
+          loadingEpisodes = uiState.loadingEpisodes,
+          onToggleSubscribe = onToggleSubscribe,
           onPlayEpisode = onPlayEpisode,
         )
       }
@@ -138,15 +139,27 @@ fun PodcastDetailsScreen(
 @Composable
 private fun EpisodeList(
   podcast: PodcastDetailsUi,
+  loadingEpisodes: Boolean,
+  onToggleSubscribe: () -> Unit,
   onPlayEpisode: (EpisodeUi) -> Unit,
 ) {
   LazyColumn(modifier = Modifier.fillMaxSize()) {
     item {
-      PodcastHeader(podcast)
-      HorizontalDivider()
+      PodcastHeader(podcast = podcast, onToggleSubscribe = onToggleSubscribe)
     }
 
-    if (podcast.episodes.isEmpty()) {
+    if (podcast.episodes.isNotEmpty()) {
+      item {
+        Text(
+          text = stringResource(R.string.episode_count, podcast.episodes.size),
+          style = MaterialTheme.typography.titleSmall,
+          color = MaterialTheme.colorScheme.primary,
+          modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+        )
+      }
+    } else if (loadingEpisodes) {
+      item { AppLoading() }
+    } else {
       item {
         Text(
           text = stringResource(R.string.no_episodes),
@@ -159,62 +172,107 @@ private fun EpisodeList(
 
     items(items = podcast.episodes, key = { it.guid }) { episode ->
       EpisodeRow(episode = episode, onClick = { onPlayEpisode(episode) })
-      HorizontalDivider()
     }
   }
 }
 
 @Composable
-private fun PodcastHeader(podcast: PodcastDetailsUi) {
-  Column(modifier = Modifier.padding(16.dp)) {
-    Row(verticalAlignment = Alignment.Top) {
-      PodcastArtwork(
-        imageUrl = podcast.imageUrlLarge.ifBlank { podcast.imageUrl },
-        thumbnailUrl = podcast.imageUrl,
-        size = 96.dp,
-      )
-      Spacer(Modifier.padding(horizontal = 8.dp))
-      Text(
-        text = podcast.title,
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.weight(1f),
-      )
+private fun PodcastHeader(podcast: PodcastDetailsUi, onToggleSubscribe: () -> Unit) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 24.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
+    PodcastArtwork(
+      imageUrl = podcast.imageUrlLarge.ifBlank { podcast.imageUrl },
+      thumbnailUrl = podcast.imageUrl,
+      size = 168.dp,
+    )
+    Spacer(Modifier.height(16.dp))
+    Text(
+      text = podcast.title,
+      style = MaterialTheme.typography.headlineSmall,
+      textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(16.dp))
+
+    // Subscribing is the main action here, so it gets a button rather than an icon
+    // hidden in the app bar.
+    if (podcast.subscribed) {
+      OutlinedButton(onClick = onToggleSubscribe) {
+        Icon(imageVector = Icons.Filled.Check, contentDescription = null)
+        Spacer(Modifier.padding(horizontal = 4.dp))
+        Text(stringResource(R.string.subscribed))
+      }
+    } else {
+      Button(onClick = onToggleSubscribe) {
+        Icon(imageVector = Icons.Outlined.Add, contentDescription = null)
+        Spacer(Modifier.padding(horizontal = 4.dp))
+        Text(stringResource(R.string.subscribe))
+      }
     }
+
     if (podcast.description.isNotBlank()) {
-      Spacer(Modifier.height(12.dp))
+      Spacer(Modifier.height(16.dp))
       ExpandableText(text = podcast.description)
     }
+    Spacer(Modifier.height(8.dp))
   }
 }
 
 @Composable
 private fun EpisodeRow(episode: EpisodeUi, onClick: () -> Unit) {
-  Column(
+  Row(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(horizontal = 16.dp, vertical = 12.dp),
+      .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+    verticalAlignment = Alignment.CenterVertically,
   ) {
-    Text(
-      text = episode.title,
-      style = MaterialTheme.typography.bodyLarge,
-      maxLines = 2,
-      overflow = TextOverflow.Ellipsis,
-    )
-    Spacer(Modifier.height(4.dp))
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
+    Column(modifier = Modifier.weight(1f)) {
       Text(
-        text = episode.releaseDate,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        text = episode.title,
+        style = MaterialTheme.typography.titleSmall,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
       )
-      Text(
-        text = episode.duration,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      if (episode.description.isNotBlank()) {
+        Spacer(Modifier.height(2.dp))
+        Text(
+          text = episode.description,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 2,
+          overflow = TextOverflow.Ellipsis,
+        )
+      }
+      Spacer(Modifier.height(6.dp))
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+          text = episode.releaseDate,
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (episode.duration.isNotBlank()) {
+          Text(
+            text = "·",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+          Text(
+            text = episode.duration,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
+    }
+    Spacer(Modifier.padding(horizontal = 4.dp))
+    FilledTonalIconButton(onClick = onClick) {
+      Icon(
+        imageVector = Icons.Filled.PlayArrow,
+        contentDescription = stringResource(R.string.play),
       )
     }
   }

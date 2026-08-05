@@ -52,7 +52,15 @@ data class PodcastDetailsUi(
 
 sealed interface PodcastDetailsUiState {
   data object Loading : PodcastDetailsUiState
-  data class Success(val podcast: PodcastDetailsUi) : PodcastDetailsUiState
+  /**
+   * [loadingEpisodes] is true while the feed is still being fetched. A podcast row
+   * exists as soon as a search stores it, but carries no episodes until then, so the
+   * screen must not claim there are none.
+   */
+  data class Success(
+    val podcast: PodcastDetailsUi,
+    val loadingEpisodes: Boolean = false,
+  ) : PodcastDetailsUiState
   data object Offline : PodcastDetailsUiState
   data class Error(val message: String?) : PodcastDetailsUiState
 }
@@ -124,7 +132,11 @@ class PodcastDetailsViewModel @AssistedInject constructor(
         if (cached == null) {
           PodcastDetailsUiState.Loading
         } else {
-          PodcastDetailsUiState.Success(cached.asUi())
+          // Show the header straight away, with the episode list still loading.
+          PodcastDetailsUiState.Success(
+            podcast = cached.asUi(),
+            loadingEpisodes = cached.episodes.isEmpty(),
+          )
         }
 
       is Result.Success -> {

@@ -2,6 +2,7 @@ package com.colisa.podplay.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -25,7 +26,7 @@ import com.colisa.podplay.R
 /**
  * Draws a tinted placeholder underneath so a slow or failed load leaves a tile rather
  * than a blank gap. [thumbnailUrl] lets a cached small image show while a larger one
- * is fetched.
+ * is fetched. With [fillWidth] the tile is square and sized by the parent, for grids.
  */
 @Composable
 fun PodcastArtwork(
@@ -33,12 +34,15 @@ fun PodcastArtwork(
   modifier: Modifier = Modifier,
   size: Dp = 56.dp,
   thumbnailUrl: String? = null,
+  fillWidth: Boolean = false,
 ) {
   val context = LocalContext.current
+  val shape = if (fillWidth) MaterialTheme.shapes.medium else MaterialTheme.shapes.small
+
   Box(
     modifier = modifier
-      .size(size)
-      .clip(MaterialTheme.shapes.small)
+      .then(if (fillWidth) Modifier.aspectRatio(1f) else Modifier.size(size))
+      .clip(shape)
       .background(MaterialTheme.colorScheme.surfaceVariant),
     contentAlignment = Alignment.Center,
   ) {
@@ -46,7 +50,7 @@ fun PodcastArtwork(
       imageVector = Icons.Filled.Podcasts,
       contentDescription = null,
       tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.size(size / 2),
+      modifier = Modifier.size(if (fillWidth) 40.dp else size / 2),
     )
     AsyncImage(
       model = ImageRequest.Builder(context)

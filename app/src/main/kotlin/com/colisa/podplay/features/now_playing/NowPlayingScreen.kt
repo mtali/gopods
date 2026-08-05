@@ -18,11 +18,13 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -92,17 +94,22 @@ fun NowPlayingScreen(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.Center,
     ) {
-      PodcastArtwork(
-        imageUrl = episode?.artUrl600?.ifBlank { episode.artUrl },
-        thumbnailUrl = episode?.artUrl,
-        size = 240.dp,
-      )
+      Surface(
+        shape = MaterialTheme.shapes.large,
+        shadowElevation = 12.dp,
+      ) {
+        PodcastArtwork(
+          imageUrl = episode?.artUrl600?.ifBlank { episode.artUrl },
+          thumbnailUrl = episode?.artUrl,
+          size = 280.dp,
+        )
+      }
 
-      Spacer(Modifier.height(32.dp))
+      Spacer(Modifier.height(40.dp))
 
       Text(
         text = episode?.title.orEmpty(),
-        style = MaterialTheme.typography.titleLarge,
+        style = MaterialTheme.typography.headlineSmall,
         textAlign = TextAlign.Center,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
@@ -114,11 +121,12 @@ fun NowPlayingScreen(
         } else {
           episode?.podcastTitle.orEmpty()
         },
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        textAlign = TextAlign.Center,
       )
 
-      Spacer(Modifier.height(24.dp))
+      Spacer(Modifier.height(32.dp))
 
       PositionSlider(
         positionMs = uiState.positionMs,
@@ -126,33 +134,39 @@ fun NowPlayingScreen(
         onSeekTo = onSeekTo,
       )
 
-      Spacer(Modifier.height(16.dp))
+      Spacer(Modifier.height(24.dp))
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
       ) {
-        IconButton(onClick = onSeekBack) {
+        FilledTonalIconButton(
+          onClick = onSeekBack,
+          modifier = Modifier.size(56.dp),
+        ) {
           Icon(
             imageVector = Icons.Filled.FastRewind,
             contentDescription = stringResource(R.string.content_fast_rewind),
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(28.dp),
           )
         }
-        FilledIconButton(onClick = onPlayPause, modifier = Modifier.size(72.dp)) {
+        FilledIconButton(onClick = onPlayPause, modifier = Modifier.size(84.dp)) {
           Icon(
             imageVector = if (uiState.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
             contentDescription = stringResource(
               if (uiState.isPlaying) R.string.pause else R.string.play
             ),
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(40.dp),
           )
         }
-        IconButton(onClick = onSeekForward) {
+        FilledTonalIconButton(
+          onClick = onSeekForward,
+          modifier = Modifier.size(56.dp),
+        ) {
           Icon(
             imageVector = Icons.Filled.FastForward,
             contentDescription = stringResource(R.string.content_fast_forward),
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(28.dp),
           )
         }
       }

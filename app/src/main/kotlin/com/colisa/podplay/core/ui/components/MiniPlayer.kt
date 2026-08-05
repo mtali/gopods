@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -41,8 +41,13 @@ fun MiniPlayer(
   ) {
     val episode = state.episode ?: return@AnimatedVisibility
     Surface(
-      color = MaterialTheme.colorScheme.surfaceContainerHigh,
-      modifier = modifier.fillMaxWidth(),
+      color = MaterialTheme.colorScheme.secondaryContainer,
+      contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+      shape = MaterialTheme.shapes.large,
+      shadowElevation = 6.dp,
+      modifier = modifier
+        .fillMaxWidth()
+        .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
       Column {
         val progress = if (state.durationMs > 0) {
@@ -50,15 +55,11 @@ fun MiniPlayer(
         } else {
           0f
         }
-        LinearProgressIndicator(
-          progress = { progress.coerceIn(0f, 1f) },
-          modifier = Modifier.fillMaxWidth(),
-        )
         Row(
           verticalAlignment = Alignment.CenterVertically,
           modifier = Modifier
             .clickable(onClick = onOpen)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(start = 8.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         ) {
           PodcastArtwork(imageUrl = episode.artUrl, size = 44.dp)
           Column(
@@ -84,16 +85,21 @@ fun MiniPlayer(
               overflow = TextOverflow.Ellipsis,
             )
           }
-          IconButton(onClick = onPlayPause) {
+          FilledIconButton(onClick = onPlayPause) {
             Icon(
               imageVector = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
               contentDescription = stringResource(
                 if (state.isPlaying) R.string.pause else R.string.play
               ),
-              modifier = Modifier.size(28.dp),
             )
           }
         }
+        LinearProgressIndicator(
+          progress = { progress.coerceIn(0f, 1f) },
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 2.dp),
+        )
       }
     }
   }
