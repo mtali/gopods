@@ -23,9 +23,6 @@ If you want to clone the repo, open a terminal and type a git checkout command:
   <img src="docs/screenshots/06-lockscreen.jpg" width="240"/>
 </p>
 
-More detail, and how to recapture them, in
-[docs/screenshots](docs/screenshots/README.md).
-
 ## Features
 
 * Search podcasts from the iTunes catalogue
@@ -59,6 +56,16 @@ sync/        the periodic episode update worker
 ```
 
 Requires Android 7.0 (API 24) or newer.
+
+## Screenshots for the listing
+
+The images above live in `docs/screenshots` and double as the Play Store set. To retake
+one, open that screen on a device and run:
+
+```
+./scripts/capture_screenshot.sh 01-library
+./scripts/capture_screenshot.sh --lock 06-lockscreen
+```
 
 ## Building
 
