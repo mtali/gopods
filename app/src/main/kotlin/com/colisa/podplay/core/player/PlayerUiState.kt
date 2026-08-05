@@ -8,4 +8,5 @@ data class PlayerUiState(
   val isBuffering: Boolean = false,
   val positionMs: Long = 0,
   val durationMs: Long = 0,
+  val speed: Float = 1f,
 )

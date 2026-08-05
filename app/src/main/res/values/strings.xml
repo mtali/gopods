@@ -5,6 +5,12 @@
     <string name="subscribe">Subscribe</string>
     <string name="subscribed">Subscribed</string>
     <string name="episode_count">%1$d episodes</string>
+    <string name="episode_playing">Playing</string>
+    <string name="episode_paused">Paused</string>
+    <string name="playback_speed">%1$s×</string>
+    <string name="playback_speed_label">Speed</string>
+    <string name="show_notes">Episode notes</string>
+    <string name="time_remaining">-%1$s</string>
     <string name="unsubscribe">Unsubscribe</string>
     <string name="pause">Pause</string>
     <string name="play">Play</string>

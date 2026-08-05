@@ -20,6 +20,7 @@ data class RssEpisode(
   val pubDate: String?,
   val duration: String?,
   val episodeType: String?,
+  val image: String?,
 )
 
 /**
@@ -37,5 +38,6 @@ fun RssPodcast.asEpisodes(podcastId: Long? = null): List<Episode> = episodes
       type = item.episodeType.orEmpty(),
       releaseDate = DateUtils.xmlDateToDate(item.pubDate),
       duration = item.duration.orEmpty(),
+      imageUrl = item.image.orEmpty(),
     )
   }

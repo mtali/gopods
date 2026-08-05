@@ -178,6 +178,12 @@ class PlayerConnection @Inject constructor(
     seekTo(target)
   }
 
+  fun setSpeed(speed: Float) {
+    val active = controller ?: return
+    active.setPlaybackSpeed(speed)
+    publish(active)
+  }
+
   fun seekTo(positionMs: Long) {
     val active = controller ?: return
     val duration = active.duration
@@ -194,6 +200,7 @@ class PlayerConnection @Inject constructor(
         isBuffering = player.playbackState == Player.STATE_BUFFERING,
         positionMs = player.currentPosition.coerceAtLeast(0),
         durationMs = duration,
+        speed = player.playbackParameters.speed,
       )
     }
     if (player.isPlaying) startTicker() else stopTicker()

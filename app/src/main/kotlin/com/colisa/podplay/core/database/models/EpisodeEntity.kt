@@ -28,10 +28,12 @@ data class EpisodeEntity(
   val type: String = "",
   val releaseDate: Date = Date(),
   val duration: String = "",
+  val imageUrl: String = "",
 )
 
 fun EpisodeEntity.asEpisode() = Episode(
   guid = guid,
+  imageUrl = imageUrl,
   podcastId = podcastId,
   title = title,
   description = description,
@@ -43,6 +45,7 @@ fun EpisodeEntity.asEpisode() = Episode(
 
 fun Episode.asEntity() = EpisodeEntity(
   guid = guid,
+  imageUrl = imageUrl,
   podcastId = podcastId,
   title = title,
   description = description,

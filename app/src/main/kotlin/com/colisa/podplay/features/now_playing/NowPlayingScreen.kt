@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FastForward
@@ -19,6 +22,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,6 +62,7 @@ fun NowPlayingRoute(
     onSeekBack = viewModel::onSeekBack,
     onSeekForward = viewModel::onSeekForward,
     onSeekTo = viewModel::onSeekTo,
+    onCycleSpeed = viewModel::onCycleSpeed,
   )
 }
 
@@ -69,11 +75,19 @@ fun NowPlayingScreen(
   onSeekBack: () -> Unit,
   onSeekForward: () -> Unit,
   onSeekTo: (Long) -> Unit,
+  onCycleSpeed: () -> Unit,
 ) {
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text(stringResource(R.string.now_playing)) },
+        title = {
+          Text(
+            text = uiState.episode?.podcastTitle.orEmpty(),
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+        },
         navigationIcon = {
           IconButton(onClick = onBackClick) {
             Icon(
@@ -86,47 +100,44 @@ fun NowPlayingScreen(
     },
   ) { padding ->
     val episode = uiState.episode
+    // Scrollable, so the notes below the controls are reachable.
     Column(
       modifier = Modifier
         .fillMaxSize()
         .padding(padding)
-        .padding(24.dp),
+        .verticalScroll(rememberScrollState())
+        .padding(horizontal = 24.dp),
       horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.Center,
     ) {
-      Surface(
-        shape = MaterialTheme.shapes.large,
-        shadowElevation = 12.dp,
-      ) {
+      Spacer(Modifier.height(16.dp))
+
+      Surface(shape = MaterialTheme.shapes.large, shadowElevation = 12.dp) {
         PodcastArtwork(
           imageUrl = episode?.artUrl600?.ifBlank { episode.artUrl },
           thumbnailUrl = episode?.artUrl,
-          size = 280.dp,
+          size = 260.dp,
         )
       }
 
-      Spacer(Modifier.height(40.dp))
+      Spacer(Modifier.height(28.dp))
 
       Text(
         text = episode?.title.orEmpty(),
-        style = MaterialTheme.typography.headlineSmall,
+        style = MaterialTheme.typography.titleLarge,
         textAlign = TextAlign.Center,
-        maxLines = 2,
+        maxLines = 3,
         overflow = TextOverflow.Ellipsis,
       )
-      Spacer(Modifier.height(8.dp))
-      Text(
-        text = if (uiState.isBuffering) {
-          stringResource(R.string.buffering)
-        } else {
-          episode?.podcastTitle.orEmpty()
-        },
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        textAlign = TextAlign.Center,
-      )
+      if (uiState.isBuffering) {
+        Spacer(Modifier.height(8.dp))
+        Text(
+          text = stringResource(R.string.buffering),
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.primary,
+        )
+      }
 
-      Spacer(Modifier.height(32.dp))
+      Spacer(Modifier.height(24.dp))
 
       PositionSlider(
         positionMs = uiState.positionMs,
@@ -134,16 +145,13 @@ fun NowPlayingScreen(
         onSeekTo = onSeekTo,
       )
 
-      Spacer(Modifier.height(24.dp))
+      Spacer(Modifier.height(12.dp))
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
       ) {
-        FilledTonalIconButton(
-          onClick = onSeekBack,
-          modifier = Modifier.size(56.dp),
-        ) {
+        FilledTonalIconButton(onClick = onSeekBack, modifier = Modifier.size(56.dp)) {
           Icon(
             imageVector = Icons.Filled.FastRewind,
             contentDescription = stringResource(R.string.content_fast_rewind),
@@ -159,10 +167,7 @@ fun NowPlayingScreen(
             modifier = Modifier.size(40.dp),
           )
         }
-        FilledTonalIconButton(
-          onClick = onSeekForward,
-          modifier = Modifier.size(56.dp),
-        ) {
+        FilledTonalIconButton(onClick = onSeekForward, modifier = Modifier.size(56.dp)) {
           Icon(
             imageVector = Icons.Filled.FastForward,
             contentDescription = stringResource(R.string.content_fast_forward),
@@ -170,7 +175,48 @@ fun NowPlayingScreen(
           )
         }
       }
+
+      Spacer(Modifier.height(4.dp))
+
+      TextButton(onClick = onCycleSpeed) {
+        Text(
+          text = stringResource(
+            R.string.playback_speed,
+            uiState.speed.toString().removeSuffix(".0"),
+          ),
+          style = MaterialTheme.typography.labelLarge,
+        )
+      }
+
+      if (!episode?.description.isNullOrBlank()) {
+        Spacer(Modifier.height(16.dp))
+        HorizontalDivider()
+        ShowNotes(description = episode.description)
+      }
+
+      Spacer(Modifier.height(32.dp))
     }
+  }
+}
+
+@Composable
+private fun ShowNotes(description: String) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(top = 20.dp),
+  ) {
+    Text(
+      text = stringResource(R.string.show_notes),
+      style = MaterialTheme.typography.titleSmall,
+      color = MaterialTheme.colorScheme.primary,
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+      text = description,
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }
 
@@ -184,6 +230,7 @@ private fun PositionSlider(
   var dragValue by remember { mutableStateOf<Float?>(null) }
   val max = durationMs.coerceAtLeast(1L).toFloat()
   val value = dragValue ?: positionMs.coerceIn(0, durationMs.coerceAtLeast(0)).toFloat()
+  val remaining = ((durationMs - value.toLong()).coerceAtLeast(0)) / 1000
 
   Column(modifier = Modifier.fillMaxWidth()) {
     Slider(
@@ -205,8 +252,9 @@ private fun PositionSlider(
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+      // Time left is what you want to know mid episode, not the total.
       Text(
-        text = DateUtils.formatElapsedTime(durationMs / 1000),
+        text = stringResource(R.string.time_remaining, DateUtils.formatElapsedTime(remaining)),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

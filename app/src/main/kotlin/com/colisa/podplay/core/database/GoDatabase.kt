@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.colisa.podplay.core.common.DATABASE_NAME
 import com.colisa.podplay.core.database.daos.PodcastDao
 import com.colisa.podplay.core.database.models.EpisodeEntity
@@ -14,7 +16,7 @@ import com.colisa.podplay.core.database.utils.Converters
 
 @Database(
   entities = [PodcastEntity::class, EpisodeEntity::class, PodcastSearchResultEntity::class],
-  version = 1,
+  version = 2,
   exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -22,6 +24,14 @@ abstract class GoDatabase : RoomDatabase() {
   abstract fun podcastDao(): PodcastDao
 
   companion object {
+
+    /** Adds per episode artwork. Existing rows fall back to the podcast image. */
+    private val MIGRATION_1_2 = object : Migration(1, 2) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE Episode ADD COLUMN imageUrl TEXT NOT NULL DEFAULT ''")
+      }
+    }
+
     @Volatile
     private var instance: GoDatabase? = null
 
@@ -31,7 +41,9 @@ abstract class GoDatabase : RoomDatabase() {
           context.applicationContext,
           GoDatabase::class.java,
           DATABASE_NAME,
-        ).build().also { instance = it }
+        ).addMigrations(MIGRATION_1_2)
+          .build()
+          .also { instance = it }
       }
     }
   }

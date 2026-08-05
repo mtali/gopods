@@ -1,5 +1,6 @@
 package com.colisa.podplay.features.podcast_details
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +44,7 @@ import com.colisa.podplay.core.ui.components.AppError
 import com.colisa.podplay.core.ui.components.AppLoading
 import com.colisa.podplay.core.ui.components.AppOffline
 import com.colisa.podplay.core.ui.components.ExpandableText
+import com.colisa.podplay.core.ui.components.PlayingIndicator
 import com.colisa.podplay.core.ui.components.PodcastArtwork
 
 @Composable
@@ -50,9 +54,11 @@ fun PodcastDetailsRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+  val playback by viewModel.playback.collectAsStateWithLifecycle()
   PodcastDetailsScreen(
     uiState = uiState,
     isRefreshing = isRefreshing,
+    playback = playback,
     onBackClick = onBackClick,
     onRefresh = viewModel::onRefresh,
     onToggleSubscribe = viewModel::onToggleSubscribe,
@@ -65,6 +71,7 @@ fun PodcastDetailsRoute(
 fun PodcastDetailsScreen(
   uiState: PodcastDetailsUiState,
   isRefreshing: Boolean,
+  playback: EpisodePlayback,
   onBackClick: () -> Unit,
   onRefresh: () -> Unit,
   onToggleSubscribe: () -> Unit,
@@ -125,6 +132,7 @@ fun PodcastDetailsScreen(
         EpisodeList(
           podcast = uiState.podcast,
           loadingEpisodes = uiState.loadingEpisodes,
+          playback = playback,
           onToggleSubscribe = onToggleSubscribe,
           onPlayEpisode = onPlayEpisode,
         )
@@ -137,6 +145,7 @@ fun PodcastDetailsScreen(
 private fun EpisodeList(
   podcast: PodcastDetailsUi,
   loadingEpisodes: Boolean,
+  playback: EpisodePlayback,
   onToggleSubscribe: () -> Unit,
   onPlayEpisode: (EpisodeUi) -> Unit,
 ) {
@@ -168,7 +177,12 @@ private fun EpisodeList(
     }
 
     items(items = podcast.episodes, key = { it.guid }) { episode ->
-      EpisodeRow(episode = episode, onClick = { onPlayEpisode(episode) })
+      EpisodeRow(
+        episode = episode,
+        isCurrent = episode.mediaUrl == playback.mediaUrl,
+        isPlaying = playback.isPlaying,
+        onClick = { onPlayEpisode(episode) },
+      )
     }
   }
 }
@@ -219,39 +233,76 @@ private fun PodcastHeader(podcast: PodcastDetailsUi, onToggleSubscribe: () -> Un
 }
 
 @Composable
-private fun EpisodeRow(episode: EpisodeUi, onClick: () -> Unit) {
-  // The row itself plays the episode, so there is no separate play control. Date and
-  // length are metadata and sit together on one overline.
-  Column(
+private fun EpisodeRow(
+  episode: EpisodeUi,
+  isCurrent: Boolean,
+  isPlaying: Boolean,
+  onClick: () -> Unit,
+) {
+  // The row is the control: tapping the loaded episode toggles it, tapping another
+  // plays it. The loaded one is tinted, and the bars move while it runs.
+  val container = if (isCurrent) {
+    MaterialTheme.colorScheme.secondaryContainer
+  } else {
+    Color.Transparent
+  }
+  val onContainer = if (isCurrent) {
+    MaterialTheme.colorScheme.onSecondaryContainer
+  } else {
+    MaterialTheme.colorScheme.onSurface
+  }
+
+  Row(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
+      .background(container)
       .padding(horizontal = 16.dp, vertical = 12.dp),
   ) {
-    Text(
-      text = listOf(episode.releaseDate, episode.duration)
-        .filter { it.isNotBlank() }
-        .joinToString("  ·  ")
-        .uppercase(),
-      style = MaterialTheme.typography.labelSmall,
-      color = MaterialTheme.colorScheme.primary,
-    )
-    Spacer(Modifier.height(4.dp))
-    Text(
-      text = episode.title,
-      style = MaterialTheme.typography.titleSmall,
-      maxLines = 2,
-      overflow = TextOverflow.Ellipsis,
-    )
-    if (episode.description.isNotBlank()) {
+    PodcastArtwork(imageUrl = episode.imageUrl, size = 64.dp)
+    Spacer(Modifier.width(12.dp))
+
+    Column(modifier = Modifier.weight(1f)) {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        if (isCurrent) {
+          PlayingIndicator(playing = isPlaying, size = 12.dp)
+          Spacer(Modifier.width(6.dp))
+          Text(
+            text = stringResource(
+              if (isPlaying) R.string.episode_playing else R.string.episode_paused
+            ).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+          )
+          Spacer(Modifier.width(8.dp))
+        }
+        Text(
+          text = listOf(episode.releaseDate, episode.duration)
+            .filter { it.isNotBlank() }
+            .joinToString("  ·  ")
+            .uppercase(),
+          style = MaterialTheme.typography.labelSmall,
+          color = if (isCurrent) onContainer else MaterialTheme.colorScheme.primary,
+        )
+      }
       Spacer(Modifier.height(4.dp))
       Text(
-        text = episode.description,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        text = episode.title,
+        style = MaterialTheme.typography.titleSmall,
+        color = onContainer,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
       )
+      if (episode.description.isNotBlank()) {
+        Spacer(Modifier.height(4.dp))
+        Text(
+          text = episode.description,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 2,
+          overflow = TextOverflow.Ellipsis,
+        )
+      }
     }
   }
 }

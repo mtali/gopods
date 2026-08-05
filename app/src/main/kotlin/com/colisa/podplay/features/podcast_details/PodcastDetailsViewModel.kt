@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -33,6 +34,7 @@ import javax.inject.Inject
 
 data class EpisodeUi(
   val guid: String,
+  val imageUrl: String,
   val title: String,
   val description: String,
   val mediaUrl: String,
@@ -48,6 +50,16 @@ data class PodcastDetailsUi(
   val imageUrlLarge: String,
   val subscribed: Boolean,
   val episodes: List<EpisodeUi>,
+)
+
+/**
+ * Which episode the player holds and whether it is running. Kept separate from the
+ * episode list, and distinct until changed, so the twice a second position updates do
+ * not re-map the list.
+ */
+data class EpisodePlayback(
+  val mediaUrl: String? = null,
+  val isPlaying: Boolean = false,
 )
 
 sealed interface PodcastDetailsUiState {
@@ -97,6 +109,15 @@ class PodcastDetailsViewModel @AssistedInject constructor(
       initialValue = PodcastDetailsUiState.Loading,
     )
 
+  val playback: StateFlow<EpisodePlayback> = playerConnection.state
+    .map { EpisodePlayback(mediaUrl = it.episode?.mediaUrl, isPlaying = it.isPlaying) }
+    .distinctUntilChanged()
+    .stateIn(
+      scope = viewModelScope,
+      started = SharingStarted.WhileSubscribed(5_000),
+      initialValue = EpisodePlayback(),
+    )
+
   fun onRefresh() {
     _isRefreshing.value = true
     refreshTrigger.value += 1
@@ -110,9 +131,14 @@ class PodcastDetailsViewModel @AssistedInject constructor(
     }
   }
 
+  /** Tapping the episode that is already loaded toggles it rather than restarting. */
   fun onPlayEpisode(episode: EpisodeUi) {
     val podcast = currentPodcast ?: return
     if (episode.mediaUrl.isBlank()) return
+    if (episode.mediaUrl == playback.value.mediaUrl) {
+      playerConnection.togglePlayPause()
+      return
+    }
     playerConnection.play(
       NowPlayingEpisode(
         title = episode.title,
@@ -176,6 +202,7 @@ class PodcastDetailsViewModel @AssistedInject constructor(
       episodes = episodes.map { episode ->
         EpisodeUi(
           guid = episode.guid,
+          imageUrl = episode.imageUrl.ifBlank { imageUrl },
           title = htmlToText(episode.title),
           description = htmlToText(episode.description),
           mediaUrl = episode.mediaUrl,

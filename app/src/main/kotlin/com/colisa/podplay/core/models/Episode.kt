@@ -11,4 +11,6 @@ data class Episode(
   val type: String = "",
   val releaseDate: Date = Date(),
   val duration: String = "",
+  /** Per episode artwork when the feed provides it; empty falls back to the podcast. */
+  val imageUrl: String = "",
 )

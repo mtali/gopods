@@ -38,6 +38,7 @@ class RssFeedDataSource @Inject constructor(callFactory: Call.Factory) {
             pubDate = item.pubDate,
             duration = item.itunesItemData?.duration,
             episodeType = item.itunesItemData?.episodeType,
+            image = item.itunesItemData?.image ?: item.image,
           )
         },
       )
