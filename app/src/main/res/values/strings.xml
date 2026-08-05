@@ -50,6 +50,7 @@
     <string name="back">Back</string>
     <string name="search_podcasts">Search podcasts</string>
     <string name="clear_search">Clear search</string>
+    <string name="recent_searches">Recent searches</string>
     <string name="error_generic_title">Something went wrong</string>
     <string name="action_retry">Retry</string>
     <string name="offline_title">No connection</string>

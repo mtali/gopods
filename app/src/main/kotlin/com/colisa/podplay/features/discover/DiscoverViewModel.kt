@@ -64,12 +64,28 @@ class DiscoverViewModel @Inject constructor(
       initialValue = DiscoverUiState.Idle,
     )
 
+  val recentSearches: StateFlow<List<String>> = itunesRepository.recentSearches()
+    .stateIn(
+      scope = viewModelScope,
+      started = SharingStarted.WhileSubscribed(5_000),
+      initialValue = emptyList(),
+    )
+
   fun onQueryChange(value: String) {
     query = value
   }
 
   fun onSearch() {
-    val term = query.trim()
+    search(query)
+  }
+
+  fun onSearchRecent(term: String) {
+    query = term
+    search(term)
+  }
+
+  private fun search(value: String) {
+    val term = value.trim()
     if (term.isEmpty()) return
     request.value = SearchRequest(term, request.value.attempt + 1)
   }

@@ -64,4 +64,7 @@ class ItunesRepositoryImpl @Inject constructor(
     },
     shouldFetch = { networkMonitor.isOnline.value },
   ).flowOn(ioDispatcher)
+
+  override fun recentSearches(limit: Int): Flow<List<String>> =
+    podcastDao.recentSearchTerms(limit).flowOn(ioDispatcher)
 }

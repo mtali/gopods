@@ -39,6 +39,13 @@ interface PodcastDao {
   @Query("SELECT * FROM PodcastSearchResult WHERE term = :term")
   suspend fun loadSearchResult(term: String): PodcastSearchResultEntity?
 
+  /**
+   * Search terms, most recent first. Rows are inserted with REPLACE, so searching a
+   * term again gives it a new rowid and moves it to the top.
+   */
+  @Query("SELECT term FROM PodcastSearchResult ORDER BY rowid DESC LIMIT :limit")
+  fun recentSearchTerms(limit: Int): Flow<List<String>>
+
   @Insert(onConflict = REPLACE)
   suspend fun insertPodcast(podcast: PodcastEntity): Long
 
