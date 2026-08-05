@@ -7,6 +7,7 @@ import com.colisa.podplay.core.common.Result
 import com.colisa.podplay.core.data.networkBoundResource
 import com.colisa.podplay.core.data.repository.PodcastRepository
 import com.colisa.podplay.core.data.repository.PodcastUpdateInfo
+import com.colisa.podplay.core.data.utils.NetworkMonitor
 import com.colisa.podplay.core.database.GoDatabase
 import com.colisa.podplay.core.database.daos.PodcastDao
 import com.colisa.podplay.core.database.models.asEntity
@@ -31,6 +32,7 @@ class PodcastRepositoryImpl @Inject constructor(
   private val rssFeedDataSource: RssFeedDataSource,
   private val podcastDao: PodcastDao,
   private val database: GoDatabase,
+  private val networkMonitor: NetworkMonitor,
   @param:Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PodcastRepository {
 
@@ -64,6 +66,7 @@ class PodcastRepositoryImpl @Inject constructor(
         }
       }
     },
+    shouldFetch = { networkMonitor.isOnline.value },
     onFetchFailed = { Timber.e(it, "Failed to refresh feed $url") },
   ).flowOn(ioDispatcher)
 

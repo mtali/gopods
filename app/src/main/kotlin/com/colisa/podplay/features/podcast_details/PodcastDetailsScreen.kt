@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.colisa.podplay.R
 import com.colisa.podplay.core.ui.components.AppError
 import com.colisa.podplay.core.ui.components.AppLoading
+import com.colisa.podplay.core.ui.components.AppOffline
 import com.colisa.podplay.core.ui.components.ExpandableText
 import com.colisa.podplay.core.ui.components.PodcastArtwork
 
@@ -106,6 +107,11 @@ fun PodcastDetailsScreen(
   ) { padding ->
     when (uiState) {
       PodcastDetailsUiState.Loading -> AppLoading(Modifier.padding(padding))
+
+      PodcastDetailsUiState.Offline -> AppOffline(
+        modifier = Modifier.padding(padding),
+        onRetry = onRefresh,
+      )
 
       is PodcastDetailsUiState.Error -> AppError(
         message = uiState.message,

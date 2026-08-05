@@ -6,6 +6,7 @@ import com.colisa.podplay.core.api.models.asPodcasts
 import com.colisa.podplay.core.common.Result
 import com.colisa.podplay.core.data.networkBoundResource
 import com.colisa.podplay.core.data.repository.ItunesRepository
+import com.colisa.podplay.core.data.utils.NetworkMonitor
 import com.colisa.podplay.core.database.GoDatabase
 import com.colisa.podplay.core.database.daos.PodcastDao
 import com.colisa.podplay.core.database.models.PodcastSearchResultEntity
@@ -28,6 +29,7 @@ class ItunesRepositoryImpl @Inject constructor(
   private val itunesApi: ItunesApi,
   private val podcastDao: PodcastDao,
   private val database: GoDatabase,
+  private val networkMonitor: NetworkMonitor,
   @param:Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ItunesRepository {
 
@@ -60,5 +62,6 @@ class ItunesRepositoryImpl @Inject constructor(
         podcastDao.insertSearchResult(searchResult)
       }
     },
+    shouldFetch = { networkMonitor.isOnline.value },
   ).flowOn(ioDispatcher)
 }

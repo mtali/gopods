@@ -10,8 +10,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,9 +44,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-
-/** Width at which the navigation bar becomes a rail. */
-private const val EXPANDED_WIDTH_DP = 600
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -105,13 +103,16 @@ class MainActivity : ComponentActivity() {
           feedUrlFromNotification?.let { navigator.navigateToPodcastDetails(it) }
         }
 
-        val widthDp = LocalConfiguration.current.screenWidthDp
+        // Medium and wider gets a rail instead of a bottom bar.
+        val widthSizeClass = currentWindowAdaptiveInfo().windowSizeClass
         GoApp(
           appState = appState,
           navigator = navigator,
           playerState = playerState,
           onPlayPause = viewModel::onPlayPause,
-          useNavigationRail = widthDp >= EXPANDED_WIDTH_DP,
+          useNavigationRail = widthSizeClass.isWidthAtLeastBreakpoint(
+            WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+          ),
         )
       }
     }

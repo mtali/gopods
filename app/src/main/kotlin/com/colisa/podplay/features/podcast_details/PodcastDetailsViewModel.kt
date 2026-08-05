@@ -6,6 +6,7 @@ import com.colisa.podplay.core.common.Result
 import com.colisa.podplay.core.common.utils.DateUtils
 import com.colisa.podplay.core.common.utils.HtmlUtils.htmlToText
 import com.colisa.podplay.core.data.repository.PodcastRepository
+import com.colisa.podplay.core.data.utils.NetworkMonitor
 import com.colisa.podplay.core.dispatchers.Dispatcher
 import com.colisa.podplay.core.dispatchers.GoDispatchers.Default
 import com.colisa.podplay.core.models.NowPlayingEpisode
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -51,6 +53,7 @@ data class PodcastDetailsUi(
 sealed interface PodcastDetailsUiState {
   data object Loading : PodcastDetailsUiState
   data class Success(val podcast: PodcastDetailsUi) : PodcastDetailsUiState
+  data object Offline : PodcastDetailsUiState
   data class Error(val message: String?) : PodcastDetailsUiState
 }
 
@@ -59,6 +62,7 @@ sealed interface PodcastDetailsUiState {
 class PodcastDetailsViewModel @AssistedInject constructor(
   private val podcastRepository: PodcastRepository,
   private val playerConnection: PlayerConnection,
+  private val networkMonitor: NetworkMonitor,
   @param:Dispatcher(Default) private val defaultDispatcher: CoroutineDispatcher,
   @Assisted private val navKey: PodcastDetailsNavKey,
 ) : ViewModel() {
@@ -71,9 +75,14 @@ class PodcastDetailsViewModel @AssistedInject constructor(
   /** Kept so an episode can be paired with its podcast when playback starts. */
   private var currentPodcast: PodcastDetailsUi? = null
 
-  val uiState: StateFlow<PodcastDetailsUiState> = refreshTrigger
-    .flatMapLatest { podcastRepository.getPodcastFeed(navKey.feedUrl) }
-    .map { result -> result.asUiState() }
+  // Combining with connectivity means regaining a connection refreshes the feed.
+  val uiState: StateFlow<PodcastDetailsUiState> = combine(
+    refreshTrigger,
+    networkMonitor.isOnline,
+  ) { _, online -> online }
+    .flatMapLatest { online ->
+      podcastRepository.getPodcastFeed(navKey.feedUrl).map { it.asUiState(online) }
+    }
     .stateIn(
       scope = viewModelScope,
       started = SharingStarted.WhileSubscribed(5_000),
@@ -108,7 +117,7 @@ class PodcastDetailsViewModel @AssistedInject constructor(
     )
   }
 
-  private suspend fun Result<Podcast>.asUiState(): PodcastDetailsUiState {
+  private suspend fun Result<Podcast>.asUiState(online: Boolean): PodcastDetailsUiState {
     val cached = data
     return when (this) {
       is Result.Loading ->
@@ -120,17 +129,24 @@ class PodcastDetailsViewModel @AssistedInject constructor(
 
       is Result.Success -> {
         _isRefreshing.value = false
-        PodcastDetailsUiState.Success(data.asUi())
+        // Nothing cached and no network: the feed was never fetched.
+        if (data.episodes.isEmpty() && !online) {
+          PodcastDetailsUiState.Offline
+        } else {
+          PodcastDetailsUiState.Success(data.asUi())
+        }
       }
 
       // Stale episodes beat an error screen, but with nothing cached to show the
       // failure has to surface so the user can retry.
       is Result.Error -> {
         _isRefreshing.value = false
-        if (cached == null || cached.episodes.isEmpty()) {
-          PodcastDetailsUiState.Error(exception?.message)
-        } else {
-          PodcastDetailsUiState.Success(cached.asUi())
+        when {
+          cached != null && cached.episodes.isNotEmpty() ->
+            PodcastDetailsUiState.Success(cached.asUi())
+
+          !online -> PodcastDetailsUiState.Offline
+          else -> PodcastDetailsUiState.Error(exception?.message)
         }
       }
     }

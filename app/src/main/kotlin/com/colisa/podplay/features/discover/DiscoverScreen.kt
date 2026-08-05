@@ -33,6 +33,7 @@ import com.colisa.podplay.core.models.Podcast
 import com.colisa.podplay.core.ui.components.AppError
 import com.colisa.podplay.core.ui.components.AppLoading
 import com.colisa.podplay.core.ui.components.AppMessage
+import com.colisa.podplay.core.ui.components.AppOffline
 import com.colisa.podplay.core.ui.components.PodcastRow
 import androidx.compose.runtime.remember
 
@@ -110,6 +111,11 @@ fun DiscoverScreen(
       )
 
       DiscoverUiState.Loading -> AppLoading(Modifier.padding(padding))
+
+      DiscoverUiState.Offline -> AppOffline(
+        modifier = Modifier.padding(padding),
+        onRetry = onRetry,
+      )
 
       DiscoverUiState.NoResults -> AppMessage(
         icon = Icons.Outlined.Search,

@@ -7,10 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.colisa.podplay.core.common.Result
 import com.colisa.podplay.core.data.repository.ItunesRepository
+import com.colisa.podplay.core.data.utils.NetworkMonitor
 import com.colisa.podplay.core.models.Podcast
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -23,6 +25,7 @@ sealed interface DiscoverUiState {
   data object Idle : DiscoverUiState
   data object Loading : DiscoverUiState
   data object NoResults : DiscoverUiState
+  data object Offline : DiscoverUiState
   data class Success(val podcasts: List<Podcast>) : DiscoverUiState
   data class Error(val message: String?) : DiscoverUiState
 }
@@ -34,6 +37,7 @@ private data class SearchRequest(val term: String, val attempt: Int = 0)
 @HiltViewModel
 class DiscoverViewModel @Inject constructor(
   private val itunesRepository: ItunesRepository,
+  private val networkMonitor: NetworkMonitor,
 ) : ViewModel() {
 
   // Text field state is not a flow, so typing does not go through the state machine.
@@ -42,12 +46,16 @@ class DiscoverViewModel @Inject constructor(
 
   private val request = MutableStateFlow(SearchRequest(term = ""))
 
-  val uiState: StateFlow<DiscoverUiState> = request
-    .flatMapLatest { search ->
+  // Combining with connectivity means regaining a connection retries the search.
+  val uiState: StateFlow<DiscoverUiState> = combine(
+    request,
+    networkMonitor.isOnline,
+  ) { search, online -> search to online }
+    .flatMapLatest { (search, online) ->
       if (search.term.isBlank()) {
         flowOf(DiscoverUiState.Idle)
       } else {
-        itunesRepository.searchPodcasts(search.term).map { it.asUiState() }
+        itunesRepository.searchPodcasts(search.term).map { it.asUiState(online) }
       }
     }
     .stateIn(
@@ -76,21 +84,24 @@ class DiscoverViewModel @Inject constructor(
   }
 
   /** Cached results are shown while refreshing and after a failed refresh. */
-  private fun Result<List<Podcast>>.asUiState(): DiscoverUiState {
+  private fun Result<List<Podcast>>.asUiState(online: Boolean): DiscoverUiState {
     val cached = data
     return when (this) {
       is Result.Loading ->
         if (cached.isNullOrEmpty()) DiscoverUiState.Loading else DiscoverUiState.Success(cached)
 
-      is Result.Success ->
-        if (data.isEmpty()) DiscoverUiState.NoResults else DiscoverUiState.Success(data)
+      is Result.Success -> when {
+        data.isNotEmpty() -> DiscoverUiState.Success(data)
+        // Nothing cached and no network: the search never ran.
+        !online -> DiscoverUiState.Offline
+        else -> DiscoverUiState.NoResults
+      }
 
-      is Result.Error ->
-        if (cached.isNullOrEmpty()) {
-          DiscoverUiState.Error(exception?.message)
-        } else {
-          DiscoverUiState.Success(cached)
-        }
+      is Result.Error -> when {
+        !cached.isNullOrEmpty() -> DiscoverUiState.Success(cached)
+        !online -> DiscoverUiState.Offline
+        else -> DiscoverUiState.Error(exception?.message)
+      }
     }
   }
 }

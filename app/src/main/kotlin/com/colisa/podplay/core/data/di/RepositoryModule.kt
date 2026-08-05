@@ -4,6 +4,8 @@ import com.colisa.podplay.core.data.repository.ItunesRepository
 import com.colisa.podplay.core.data.repository.PodcastRepository
 import com.colisa.podplay.core.data.repository.impl.ItunesRepositoryImpl
 import com.colisa.podplay.core.data.repository.impl.PodcastRepositoryImpl
+import com.colisa.podplay.core.data.utils.ConnectivityManagerNetworkMonitor
+import com.colisa.podplay.core.data.utils.NetworkMonitor
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,4 +23,8 @@ abstract class RepositoryModule {
   @Binds
   @Singleton
   abstract fun bindsPodcastRepository(repository: PodcastRepositoryImpl): PodcastRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindsNetworkMonitor(monitor: ConnectivityManagerNetworkMonitor): NetworkMonitor
 }

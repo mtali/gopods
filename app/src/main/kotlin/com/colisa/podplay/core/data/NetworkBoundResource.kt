@@ -11,12 +11,15 @@ import kotlinx.coroutines.flow.map
 /**
  * Emits the cached value first, then refreshes from the network and emits again.
  * On failure the cached value is kept and returned inside [Result.Error].
+ *
+ * [shouldFetch] is where a caller skips the network, for example while offline, so a
+ * cached list is shown straight away instead of waiting for a connection timeout.
  */
 inline fun <ResultType, RequestType> networkBoundResource(
   crossinline query: () -> Flow<ResultType>,
   crossinline fetch: suspend () -> RequestType,
   crossinline saveFetchResult: suspend (RequestType) -> Unit,
-  crossinline shouldFetch: (ResultType) -> Boolean = { true },
+  crossinline shouldFetch: suspend (ResultType) -> Boolean = { true },
   crossinline onFetchFailed: (Throwable) -> Unit = {},
 ): Flow<Result<ResultType>> = flow {
   val cached = query().first()

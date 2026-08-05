@@ -1,5 +1,10 @@
 package com.colisa.podplay.features.settings
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,14 +28,17 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.colisa.podplay.R
@@ -46,12 +54,42 @@ fun SettingsRoute(
   viewModel: SettingsViewModel = hiltViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val context = LocalContext.current
+
+  // From API 33 notifications need a runtime grant, so enabling the setting asks for
+  // it first and only turns on if it was allowed.
+  val permissionLauncher = rememberLauncherForActivityResult(
+    ActivityResultContracts.RequestPermission(),
+  ) { granted ->
+    viewModel.onNotifyNewEpisodesChange(granted)
+    if (!granted) {
+      Toast.makeText(
+        context,
+        context.getString(R.string.notification_permission_rationale),
+        Toast.LENGTH_LONG,
+      ).show()
+    }
+  }
+
   SettingsScreen(
     preferences = uiState,
     onBackClick = onBackClick,
     onThemeModeChange = viewModel::onThemeModeChange,
     onDynamicColorChange = viewModel::onDynamicColorChange,
-    onNotifyNewEpisodesChange = viewModel::onNotifyNewEpisodesChange,
+    onNotifyNewEpisodesChange = { enabled ->
+      val needsPermission = enabled &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(
+          context,
+          Manifest.permission.POST_NOTIFICATIONS,
+        ) != PackageManager.PERMISSION_GRANTED
+
+      if (needsPermission) {
+        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+      } else {
+        viewModel.onNotifyNewEpisodesChange(enabled)
+      }
+    },
     onFastSeekSecondsChange = viewModel::onFastSeekSecondsChange,
   )
 }

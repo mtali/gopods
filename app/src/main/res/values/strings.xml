@@ -69,6 +69,8 @@
     <string name="clear_search">Clear search</string>
     <string name="error_generic_title">Something went wrong</string>
     <string name="action_retry">Retry</string>
+    <string name="offline_title">No connection</string>
+    <string name="offline_message">Connect to the internet to load this</string>
     <string name="discover_empty_title">Find a podcast</string>
     <string name="discover_empty_message">Search by name, topic or author</string>
     <string name="discover_no_results">No podcasts found</string>
