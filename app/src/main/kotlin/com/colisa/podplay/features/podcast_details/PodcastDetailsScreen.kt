@@ -2,25 +2,20 @@ package com.colisa.podplay.features.podcast_details
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -225,15 +220,19 @@ private fun PodcastHeader(podcast: PodcastDetailsUi, onToggleSubscribe: () -> Un
 
 @Composable
 private fun EpisodeRow(episode: EpisodeUi, onClick: () -> Unit) {
+  // The row itself plays the episode, so there is no separate play control. Date and
+  // length are metadata and sit together on one overline.
   Column(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
       .padding(horizontal = 16.dp, vertical = 12.dp),
   ) {
-    // Date first as an overline, so scanning down the list reads as a timeline.
     Text(
-      text = episode.releaseDate.uppercase(),
+      text = listOf(episode.releaseDate, episode.duration)
+        .filter { it.isNotBlank() }
+        .joinToString("  ·  ")
+        .uppercase(),
       style = MaterialTheme.typography.labelSmall,
       color = MaterialTheme.colorScheme.primary,
     )
@@ -253,23 +252,6 @@ private fun EpisodeRow(episode: EpisodeUi, onClick: () -> Unit) {
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
       )
-    }
-    Spacer(Modifier.height(10.dp))
-    // Play and length together: one obvious target that also says how long it is.
-    FilledTonalButton(
-      onClick = onClick,
-      contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-      modifier = Modifier.height(34.dp),
-    ) {
-      Icon(
-        imageVector = Icons.Filled.PlayArrow,
-        contentDescription = null,
-        modifier = Modifier.size(18.dp),
-      )
-      if (episode.duration.isNotBlank()) {
-        Spacer(Modifier.width(6.dp))
-        Text(text = episode.duration, style = MaterialTheme.typography.labelMedium)
-      }
     }
   }
 }
