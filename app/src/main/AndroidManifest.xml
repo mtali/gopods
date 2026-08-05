@@ -30,6 +30,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!--
+            GoApp provides the WorkManager configuration, so WorkManager's own
+            initializer has to be removed or it starts with the default one and the
+            HiltWorkerFactory is never used. androidx.startup stays for other libraries.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <service
             android:name=".core.player.PlaybackService"
             android:exported="true"

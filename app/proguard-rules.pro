@@ -1,32 +1,34 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Keep line numbers so release crash reports stay readable.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Retrofit. R8 full mode strips generic signatures from classes that are not kept,
+# and suspend functions carry their type argument through Continuation.
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# kotlinx.serialization. The generated serializers are reached reflectively through
+# the companion, so the annotated classes and their serializers have to survive.
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.**
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-keepclasseswithmembers class kotlinx.serialization.json.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class com.colisa.podplay.**$$serializer { *; }
+-keepclassmembers class com.colisa.podplay.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.colisa.podplay.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Data classes carried over the wire and into DataStore.
+-keep class com.colisa.podplay.core.api.models.** { *; }
+-keep class com.colisa.podplay.core.models.** { *; }
 
-# Keep generic signature of Call, Response (R8 full mode strips signatures from non-kept items).
- -keep,allowobfuscation,allowshrinking interface retrofit2.Call
- -keep,allowobfuscation,allowshrinking class retrofit2.Response
-
- # With R8 full mode generic signatures are stripped for classes that are not
- # kept. Suspend functions are wrapped in continuations where the type argument
- # is used.
- -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
-
- -keep class com.colisa.podplay.network.models.** { *; }
+# Navigation 3 keys are serialized into the saved back stack.
+-keep class com.colisa.podplay.features.**.navigation.*NavKey { *; }

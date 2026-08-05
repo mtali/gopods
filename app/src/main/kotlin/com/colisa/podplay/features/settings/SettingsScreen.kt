@@ -55,6 +55,7 @@ fun SettingsRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val context = LocalContext.current
+  val permissionRationale = stringResource(R.string.notification_permission_rationale)
 
   // From API 33 notifications need a runtime grant, so enabling the setting asks for
   // it first and only turns on if it was allowed.
@@ -63,11 +64,7 @@ fun SettingsRoute(
   ) { granted ->
     viewModel.onNotifyNewEpisodesChange(granted)
     if (!granted) {
-      Toast.makeText(
-        context,
-        context.getString(R.string.notification_permission_rationale),
-        Toast.LENGTH_LONG,
-      ).show()
+      Toast.makeText(context, permissionRationale, Toast.LENGTH_LONG).show()
     }
   }
 

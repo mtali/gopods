@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.serialization)
@@ -6,6 +8,17 @@ plugins {
   alias(libs.plugins.hilt)
   alias(libs.plugins.androidx.room)
 }
+
+// Release signing comes from a git ignored keystore/keystore.properties. If the file is
+// absent, on a fresh clone or on CI, the release build falls back to the debug key so it
+// still assembles.
+val keystorePropertiesFile = rootProject.file("keystore/keystore.properties")
+val keystoreProperties = Properties().apply {
+  if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { load(it) }
+  }
+}
+val hasReleaseKeystore = keystorePropertiesFile.exists()
 
 android {
   namespace = "com.colisa.podplay"
@@ -23,6 +36,17 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  signingConfigs {
+    create("release") {
+      if (hasReleaseKeystore) {
+        storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+        storePassword = keystoreProperties.getProperty("storePassword")
+        keyAlias = keystoreProperties.getProperty("keyAlias")
+        keyPassword = keystoreProperties.getProperty("keyPassword")
+      }
+    }
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = true
@@ -31,6 +55,11 @@ android {
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
       )
+      signingConfig = if (hasReleaseKeystore) {
+        signingConfigs.getByName("release")
+      } else {
+        signingConfigs.getByName("debug")
+      }
     }
   }
 
