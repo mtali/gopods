@@ -3,7 +3,7 @@ package com.colisa.podplay
 import android.content.Context
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import com.colisa.podplay.ui.NowPlayingViewModel.NowPlayingEpisode
+import com.colisa.podplay.core.models.NowPlayingEpisode
 import com.squareup.moshi.Moshi
 
 class GoPreferences(context: Context) {

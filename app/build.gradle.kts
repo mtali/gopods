@@ -102,11 +102,8 @@ dependencies {
   implementation(libs.kotlinx.coroutines.core)
 
   // Playback
-  implementation(libs.androidx.media)
-  implementation(libs.exoplayer.core)
-  implementation(libs.exoplayer.mediasession)
-  implementation(libs.exoplayer.ui)
-  implementation(libs.support.media.compat)
+  implementation(libs.androidx.media3.exoplayer)
+  implementation(libs.androidx.media3.session)
 
   // Networking
   implementation(libs.kotlinx.serialization.json)

@@ -1,18 +1,9 @@
 package com.colisa.podplay.ui
 
-import android.animation.ValueAnimator
 import android.app.Activity
-import android.content.ComponentName
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.view.Gravity
-import android.view.animation.LinearInterpolator
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,8 +11,9 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.media.MediaBrowserServiceCompat
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -36,24 +28,19 @@ import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
 import com.colisa.podplay.R
+import com.colisa.podplay.app.goPreferences
+import com.colisa.podplay.core.models.NowPlayingEpisode
+import com.colisa.podplay.core.player.PlayerConnection
 import com.colisa.podplay.databinding.ActivityMainBinding
 import com.colisa.podplay.databinding.NowPlayingBinding
 import com.colisa.podplay.databinding.PlayerControlsPanelBinding
 import com.colisa.podplay.extensions.afterMeasured
-import com.colisa.podplay.extensions.isError
-import com.colisa.podplay.extensions.isPaused
-import com.colisa.podplay.extensions.isPlaying
-import com.colisa.podplay.extensions.isPrepared
-import com.colisa.podplay.extensions.onMediaController
 import com.colisa.podplay.extensions.setupMessagingToast
-import com.colisa.podplay.extensions.stateName
-import com.colisa.podplay.app.goPreferences
-import com.colisa.podplay.player.GoPlayerService
+import com.colisa.podplay.sync.EpisodeUpdateWorker
 import com.colisa.podplay.ui.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.util.EventObserver
 import com.colisa.podplay.util.ThemeUtils
 import com.colisa.podplay.util.VersionUtils
-import com.colisa.podplay.sync.EpisodeUpdateWorker
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
@@ -65,9 +52,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInterface {
+
+    @Inject
+    lateinit var playerConnection: PlayerConnection
 
     // Binding classed
     private var binding: ActivityMainBinding? = null
@@ -80,22 +71,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
 
     private lateinit var playingDialog: MaterialDialog
 
-    // Playback
-    private val mediaBrowser: MediaBrowserCompat
-            by lazy {
-                MediaBrowserCompat(
-                    this,
-                    ComponentName(this, GoPlayerService::class.java),
-                    MediaBrowserCallback(),
-                    null
-                )
-            }
-
-    private var mediaControllerCallback: MediaControllerCallback? = null
-
     private var draggingScrubber: Boolean = false
-    private var progressAnimator: ValueAnimator? = null
-    private var episodeDuration: Long = 0
 
     private val appUpdateManager by lazy { AppUpdateManagerFactory.create(applicationContext) }
 
@@ -162,7 +138,7 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
         playerControlsPanelBinding?.let {
             it.playPauseButton.setOnClickListener {
                 checkIsPlayer {
-                    togglePlayPause()
+                    playerConnection.togglePlayPause()
                 }
             }
         }
@@ -181,8 +157,6 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
 
     override fun onResume() {
         super.onResume()
-        updatePlayState()
-        updateControlsFromController()
         appUpdateManager
             .appUpdateInfo
             .addOnSuccessListener { appUpdateInfo ->
@@ -204,65 +178,47 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
         goViewModel.playEpisodeEvent.observe(this, EventObserver {
             onEpisodeSelected(it)
         })
+
+        npViewModel.positionMs.observe(this) { position ->
+            if (!draggingScrubber) {
+                npBinding?.npSeekBar?.progress = position.toInt()
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                playerConnection.errors.collect { message -> quickMessage(message) }
+            }
+        }
     }
 
 
     private fun onEpisodeSelected(episode: GoViewModel.REpisode) {
-        val podcast = goViewModel.rPodcastFeed.value
-        podcast?.let {
-            val npEpisode = NowPlayingViewModel.NowPlayingEpisode.from(episode, podcast)
-            val controller = MediaControllerCompat.getMediaController(this)
-            if (controller.playbackState != null) {
-                if (controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
-                    controller.transportControls.pause()
-                } else {
-                    startPlaying(npEpisode)
-                }
-            } else {
-                startPlaying(npEpisode)
-            }
-            openNowPlaying()
+        val podcast = goViewModel.rPodcastFeed.value ?: return
+        val npEpisode = NowPlayingEpisode(
+            title = episode.title.orEmpty(),
+            artUrl = podcast.imageUrl.orEmpty(),
+            artUrl600 = podcast.imageUrl600.orEmpty(),
+            mediaUrl = episode.mediaUrl.orEmpty(),
+            description = episode.description.orEmpty(),
+            podcastTitle = podcast.feedTitle.orEmpty(),
+        )
+        if (npEpisode.mediaUrl.isBlank()) {
+            quickMessage(R.string.error_media_not_found)
+            return
         }
-    }
-
-    /**
-     * Play podcast episode, call this when all you want to play
-     * We don't check conditions here
-     */
-    private fun startPlaying(np: NowPlayingViewModel.NowPlayingEpisode) {
-        onMediaController { controller ->
-            npViewModel.saveRecentEpisode(np)
-            val bundle = Bundle()
-            bundle.apply {
-                putString(MediaMetadataCompat.METADATA_KEY_TITLE, np.title)
-                putString(MediaMetadataCompat.METADATA_KEY_ARTIST, np.podcastTitle)
-                putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, np.artUrl600)
-            }
-            controller.transportControls.playFromUri(Uri.parse(np.mediaUrl), bundle)
-        }
+        playerConnection.play(npEpisode)
+        openNowPlaying()
     }
 
     override fun onStart() {
         super.onStart()
-        if (!mediaBrowser.isConnected) {
-            mediaBrowser.connect()
-        } else {
-            onMediaController { controller ->
-                mediaControllerCallback?.let {
-                    controller.registerCallback(it)
-                }
-            }
-        }
+        playerConnection.connect()
     }
 
     override fun onStop() {
         super.onStop()
-        onMediaController { controller ->
-            mediaControllerCallback?.let {
-                controller.unregisterCallback(it)
-            }
-        }
-
+        playerConnection.release()
     }
 
     private fun handleIntent(intent: Intent?) {
@@ -293,9 +249,9 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
             npBinding?.let { bn ->
                 bn.lifecycleOwner = this@MainActivity
                 bn.npViewModel = npViewModel
-                bn.npPlay.setOnClickListener { checkIsPlayer { togglePlayPause() } }
-                bn.npFastForward.setOnClickListener { checkIsPlayer { fastSeek(true) } }
-                bn.npFastRewind.setOnClickListener { checkIsPlayer { fastSeek(false) } }
+                bn.npPlay.setOnClickListener { checkIsPlayer { playerConnection.togglePlayPause() } }
+                bn.npFastForward.setOnClickListener { checkIsPlayer { playerConnection.seekBy(forward = true) } }
+                bn.npFastRewind.setOnClickListener { checkIsPlayer { playerConnection.seekBy(forward = false) } }
             }
 
             if (VersionUtils.isOreoMR1() && !ThemeUtils.isDeviceLand(resources)) {
@@ -309,13 +265,9 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
 
             setupSeekBarProgressListener()
 
-            onShow {
-                updateControlsFromController()
-            }
-
             onDismiss {
                 npBinding?.npSeekBar?.setOnSeekBarChangeListener(null)
-                progressAnimator?.cancel()
+                npBinding = null
             }
         }
     }
@@ -367,39 +319,6 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
         )
     }
 
-
-    private fun registerMediaController(token: MediaSessionCompat.Token) {
-        val controller = MediaControllerCompat(this, token)
-        MediaControllerCompat.setMediaController(this, controller)
-        mediaControllerCallback = MediaControllerCallback()
-        controller.registerCallback(mediaControllerCallback!!)
-    }
-
-    private fun togglePlayPause() {
-        onMediaController { controller ->
-            if (controller.playbackState != null) {
-                val state = controller.playbackState
-                when {
-                    state.isPlaying -> controller.transportControls.pause()
-                    state.isPaused -> controller.transportControls.play()
-                    else -> {
-                        npViewModel.recentEpisode.value?.let { startPlaying(it) }
-                    }
-                }
-            } else {
-                npViewModel.recentEpisode.value?.let { startPlaying(it) }
-            }
-        }
-    }
-
-    private fun updatePlayState() {
-        onMediaController {
-            val isPlaying = it.playbackState.isPlaying
-            Timber.d("Update playback state {'playing': $isPlaying, 'service': ${mediaBrowser.isConnected} }")
-            npViewModel.setIsPlaying(isPlaying)
-        }
-    }
-
     private fun quickMessage(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).apply {
             setGravity(Gravity.CENTER, 0, 0)
@@ -412,139 +331,19 @@ class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInt
         quickMessage(string)
     }
 
-
-    private fun fastSeek(isForward: Boolean) = onMediaController {
-        val step = goPreferences.fastSeekingStep * 1000
-        val isPrepared = it.playbackState.isPrepared
-        if (isPrepared) {
-            var newPosition = it.playbackState.position
-            if (isForward) {
-                newPosition += step
-            } else {
-                newPosition -= step
-            }
-            it.transportControls.seekTo(newPosition)
-        }
-    }
-
-    private fun updateControlsFromMetadata(metadata: MediaMetadataCompat) {
-        episodeDuration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
-        npViewModel.setEpisodeDuration(episodeDuration)
-    }
-
     private fun setupSeekBarProgressListener() {
+        npBinding?.npSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) = Unit
 
-        npBinding!!.npSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                npViewModel.setCurrentTime((progress / 1000).toLong())
-            }
-
-            override fun onStartTrackingTouch(p0: SeekBar?) {
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
                 draggingScrubber = true
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
                 draggingScrubber = false
-                onMediaController {
-                    if (it.playbackState != null) {
-                        it.transportControls.seekTo(seekBar.progress.toLong())
-                    } else {
-                        seekBar.progress = 0
-                    }
-                }
+                playerConnection.seekTo(seekBar.progress.toLong())
             }
         })
-    }
-
-    private fun animateScrubber(progress: Int, speed: Float) {
-        val timeRemaining = ((episodeDuration - progress) / speed).toInt()
-        if (timeRemaining < 0)
-            return
-        progressAnimator = ValueAnimator.ofInt(progress, episodeDuration.toInt())
-        progressAnimator?.let { animator ->
-            animator.duration = timeRemaining.toLong()
-            animator.interpolator = LinearInterpolator()
-            animator.addUpdateListener {
-                if (draggingScrubber) {
-                    animator.cancel()
-                } else {
-                    npBinding?.let {
-                        it.npSeekBar.progress = animator.animatedValue as Int
-                    }
-                }
-            }
-            animator.start()
-        }
-    }
-
-    private fun handleStateChange(state: Int, position: Long, speed: Float) {
-        progressAnimator?.let {
-            it.cancel()
-            progressAnimator = null
-        }
-        val progress = position.toInt()
-        npBinding?.let { it.npSeekBar.progress = progress }
-        if (state == PlaybackStateCompat.STATE_PLAYING) {
-            animateScrubber(progress, speed)
-        }
-    }
-
-    private fun updateControlsFromController() = onMediaController { controller ->
-        val metadata = controller.metadata
-        if (metadata != null) {
-            val state = controller.playbackState
-            handleStateChange(state.state, state.position, state.playbackSpeed)
-            updateControlsFromMetadata(metadata)
-        }
-    }
-
-
-    /**
-     * This receive callbacks for service connection [MediaBrowserServiceCompat]
-     */
-    inner class MediaBrowserCallback : MediaBrowserCompat.ConnectionCallback() {
-        override fun onConnected() {
-            super.onConnected()
-            Timber.d("onConnected")
-            registerMediaController(mediaBrowser.sessionToken)
-            updateControlsFromController()
-        }
-
-        override fun onConnectionSuspended() {
-            super.onConnectionSuspended()
-            Timber.d("onConnectionSuspended")
-        }
-
-        override fun onConnectionFailed() {
-            super.onConnectionFailed()
-            Timber.d("onConnectionFailed")
-        }
-    }
-
-    inner class MediaControllerCallback : MediaControllerCompat.Callback() {
-        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-            super.onMetadataChanged(metadata)
-            metadata?.let {
-                updateControlsFromMetadata(it)
-            }
-            Timber.d("onMetadataChanged: ${metadata?.mediaMetadata}")
-        }
-
-        override fun onPlaybackStateChanged(playState: PlaybackStateCompat?) {
-            val state = playState ?: return
-            npViewModel.setPlayState(state.state)
-            handleStateChange(state.state, state.position, state.playbackSpeed)
-            updatePlayState()
-            when {
-                state.isError -> quickMessage("Error playing episode!")
-            }
-            Timber.d("onPlaybackStateChanged() = ${state.stateName}")
-        }
-
-        override fun onSessionEvent(event: String?, extras: Bundle?) {
-            super.onSessionEvent(event, extras)
-            Timber.d("onSessionEvent: $event")
-        }
     }
 
     override fun onCloseActivity() {

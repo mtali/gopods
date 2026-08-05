@@ -13,7 +13,7 @@ import com.bumptech.glide.Glide
 import com.colisa.podplay.R
 import com.colisa.podplay.extensions.handleViewVisibility
 import com.colisa.podplay.ui.GoViewModel
-import com.colisa.podplay.ui.NowPlayingViewModel
+import com.colisa.podplay.core.models.NowPlayingEpisode
 import com.colisa.podplay.ui.adapters.EpisodeListAdapter
 import com.colisa.podplay.ui.adapters.PodcastsListAdapter
 import com.google.android.material.imageview.ShapeableImageView
@@ -71,7 +71,7 @@ fun setMarqueeText(view: TextView, text: String?) {
 }
 
 @BindingAdapter("app:episodeTitle")
-fun setEpisodeTitle(view: TextView, episode: NowPlayingViewModel.NowPlayingEpisode?) {
+fun setEpisodeTitle(view: TextView, episode: NowPlayingEpisode?) {
     if (episode != null) {
         view.text = episode.title
     } else {
@@ -80,7 +80,7 @@ fun setEpisodeTitle(view: TextView, episode: NowPlayingViewModel.NowPlayingEpiso
 }
 
 @BindingAdapter("app:podcastTitle")
-fun setPodcastTitle(view: TextView, episode: NowPlayingViewModel.NowPlayingEpisode?) {
+fun setPodcastTitle(view: TextView, episode: NowPlayingEpisode?) {
     if (episode != null) {
         view.text = episode.podcastTitle
     } else {
@@ -98,7 +98,7 @@ fun setPlayPauseSrc(view: ImageButton, isPlaying: Boolean?) {
 }
 
 @BindingAdapter("app:panelCoverArt")
-fun setCover(view: ShapeableImageView, episode: NowPlayingViewModel.NowPlayingEpisode?) {
+fun setCover(view: ShapeableImageView, episode: NowPlayingEpisode?) {
     if (episode == null) {
         Glide.with(view)
             .load(R.drawable.album_art)

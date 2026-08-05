@@ -10,7 +10,6 @@ appcompat = "1.7.1"
 constraintlayout = "2.2.1"
 core-ktx = "1.17.0"
 lifecycle = "2.10.0"
-media = "1.7.0"
 navigation = "2.9.3"
 preference = "1.2.1"
 room = "2.8.4"
@@ -27,6 +26,8 @@ androidx-hilt = "1.3.0"
 # calls an AGP 9 API, and 2.59.2+ rejects AGP 8 outright.
 hilt = "2.58"
 
+media3 = "1.10.1"
+
 # Networking
 okhttp = "5.4.0"
 retrofit = "3.0.0"
@@ -39,15 +40,13 @@ play-update = "2.1.0"
 rssparser = "6.1.5"
 timber = "5.0.1"
 
-# Replaced in later migration phases: ExoPlayer 2 -> Media3, Glide -> Coil,
-# Moshi -> kotlinx.serialization, and the View-only UI libraries.
-exoplayer = "2.19.1"
+# Replaced in later migration phases: Glide -> Coil, Moshi -> kotlinx.serialization,
+# and the View-only UI libraries.
 glide = "4.16.0"
 material-dialogs = "3.3.0"
 moshi = "1.15.0"
 halfbit-edge = "0.10"
 readmore = "1.0.0"
-support-lib = "28.0.0"
 
 # Test
 androidx-test-ext-junit = "1.2.1"
@@ -60,7 +59,8 @@ androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayo
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
 androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
-androidx-media = { module = "androidx.media:media", version.ref = "media" }
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+androidx-media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
 androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference" }
@@ -88,9 +88,6 @@ retrofit-serialization-converter = { module = "com.jakewharton.retrofit:retrofit
 rssparser = { module = "com.prof18.rssparser:rssparser", version.ref = "rssparser" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
-exoplayer-core = { module = "com.google.android.exoplayer:exoplayer-core", version.ref = "exoplayer" }
-exoplayer-mediasession = { module = "com.google.android.exoplayer:extension-mediasession", version.ref = "exoplayer" }
-exoplayer-ui = { module = "com.google.android.exoplayer:exoplayer-ui", version.ref = "exoplayer" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 halfbit-edge-to-edge = { module = "de.halfbit:edge-to-edge", version.ref = "halfbit-edge" }
 material-dialogs-bottomsheets = { module = "com.afollestad.material-dialogs:bottomsheets", version.ref = "material-dialogs" }
@@ -98,7 +95,6 @@ material-dialogs-core = { module = "com.afollestad.material-dialogs:core", versi
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 moshi-kotlin-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
 readmore-textview = { module = "kr.co.prnd:readmore-textview", version.ref = "readmore" }
-support-media-compat = { module = "com.android.support:support-media-compat", version.ref = "support-lib" }
 
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
