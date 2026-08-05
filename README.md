@@ -13,10 +13,18 @@ If you want to clone the repo, open a terminal and type a git checkout command:
 ## Screenshots
 
 <p align="center">
-  <img src="docs/home.jpeg" width="250"/>
-  <img src="docs/notification.jpeg" width="250"/>
-  <img src="docs/settings.jpeg" width="250"/>
+  <img src="docs/screenshots/01-library.jpg" width="240"/>
+  <img src="docs/screenshots/02-discover.jpg" width="240"/>
+  <img src="docs/screenshots/03-details.jpg" width="240"/>
 </p>
+<p align="center">
+  <img src="docs/screenshots/04-now-playing.jpg" width="240"/>
+  <img src="docs/screenshots/05-settings.jpg" width="240"/>
+  <img src="docs/screenshots/06-lockscreen.jpg" width="240"/>
+</p>
+
+More detail, and how to recapture them, in
+[docs/screenshots](docs/screenshots/README.md).
 
 ## Features
 

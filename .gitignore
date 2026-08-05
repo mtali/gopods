@@ -21,3 +21,6 @@ local.properties
 # Release signing
 /keystore/keystore.properties
 /keystore/*.jks
+
+# Lossless screenshot captures; the optimised set in docs/screenshots is tracked
+/screenshots/
