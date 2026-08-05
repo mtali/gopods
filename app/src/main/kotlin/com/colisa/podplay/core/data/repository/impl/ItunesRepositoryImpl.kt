@@ -58,7 +58,7 @@ class ItunesRepositoryImpl @Inject constructor(
         count = response.resultCount,
       )
       database.withTransaction {
-        podcastDao.insertPodcasts(podcasts.map { it.asEntity() })
+        podcasts.forEach { podcastDao.upsertSearchResult(it.asEntity()) }
         podcastDao.insertSearchResult(searchResult)
       }
     },

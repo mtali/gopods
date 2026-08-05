@@ -56,12 +56,12 @@ class PodcastRepositoryImpl @Inject constructor(
       rssFeedDataSource.fetchFeed(url)
     },
     saveFetchResult = { feed ->
-      // Only feeds already stored by a search can be refreshed.
-      val stored = podcastDao.getPodcast(url)
-      if (stored != null) {
-        val updated = stored.copy(feedDescription = feed.description)
+      // Only feeds already stored by a search can be refreshed. The row is edited in
+      // place rather than replaced, so the subscription and episodes stay put.
+      val podcastId = podcastDao.getPodcast(url)?.id
+      if (podcastId != null) {
         database.withTransaction {
-          val podcastId = podcastDao.insertPodcast(updated)
+          podcastDao.updateFeedDescription(podcastId, feed.description)
           podcastDao.insertEpisodes(feed.asEpisodes(podcastId).map { it.asEntity() })
         }
       }
@@ -76,7 +76,13 @@ class PodcastRepositoryImpl @Inject constructor(
 
   override suspend fun subscribePodcast(podcast: Podcast, subscribed: Boolean) {
     withContext(ioDispatcher) {
-      podcastDao.updatePodcasts(podcast.copy(subscribed = subscribed).asEntity())
+      // Writing only the flag leaves a feed refresh running alongside it untouched.
+      val id = podcast.id ?: podcastDao.getPodcast(podcast.feedUrl)?.id
+      if (id == null) {
+        Timber.w("Cannot subscribe to an unstored podcast ${podcast.feedUrl}")
+        return@withContext
+      }
+      podcastDao.updateSubscribed(id, subscribed)
     }
   }
 

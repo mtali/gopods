@@ -123,11 +123,11 @@ class PodcastDetailsViewModel @AssistedInject constructor(
     refreshTrigger.value += 1
   }
 
+  /** The stored row decides what the flag becomes, so a stale screen cannot flip it back. */
   fun onToggleSubscribe() {
-    val podcast = currentPodcast ?: return
     viewModelScope.launch {
       val stored = podcastRepository.getPodcast(navKey.feedUrl) ?: return@launch
-      podcastRepository.subscribePodcast(stored, !podcast.subscribed)
+      podcastRepository.subscribePodcast(stored, !stored.subscribed)
     }
   }
 
