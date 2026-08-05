@@ -180,12 +180,12 @@ class GoViewModel(application: Application) : AndroidViewModel(application) {
                             spinner(result.data?.episodes.isNullOrEmpty())
                         }
 
-                        is Resource.Error -> {
+                        is Resource.Error<Podcast> -> {
                             spinner(false)
                             message(result.error?.message)
                         }
 
-                        is Resource.Success -> {
+                        is Resource.Success<Podcast> -> {
                             val podcast = result.data
                             podcast?.let {
                                 block(it)
