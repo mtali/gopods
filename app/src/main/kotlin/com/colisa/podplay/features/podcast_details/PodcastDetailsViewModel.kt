@@ -179,8 +179,8 @@ class PodcastDetailsViewModel @AssistedInject constructor(
           title = htmlToText(episode.title),
           description = htmlToText(episode.description),
           mediaUrl = episode.mediaUrl,
-          releaseDate = DateUtils.dateToShortDate(episode.releaseDate),
-          duration = episode.duration,
+          releaseDate = DateUtils.formatRelativeDate(episode.releaseDate),
+          duration = DateUtils.formatDuration(episode.duration),
         )
       },
     ).also { currentPodcast = it }

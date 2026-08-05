@@ -42,7 +42,7 @@ fun PodcastRow(
       )
       Spacer(Modifier.height(4.dp))
       Text(
-        text = DateUtils.dateToShortDate(podcast.lastUpdated),
+        text = DateUtils.formatRelativeDate(podcast.lastUpdated),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -76,7 +76,7 @@ fun PodcastGridItem(
       overflow = TextOverflow.Ellipsis,
     )
     Text(
-      text = DateUtils.dateToShortDate(podcast.lastUpdated),
+      text = DateUtils.formatRelativeDate(podcast.lastUpdated),
       style = MaterialTheme.typography.labelSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
