@@ -23,8 +23,8 @@
 
 set -euo pipefail
 
-RAW_DIR="screenshots/raw"
-OUT_DIR="docs/screenshots"
+RAW_DIR="store/photos"
+OUT_DIR="store/screenshots"
 JPEG_QUALITY=82
 PIN=1234
 
@@ -78,4 +78,4 @@ echo "   lossless copy in $RAW_DIR/$NAME.png (git ignored)"
 # The captures are the device's native size, which on a modern phone is taller than
 # 9:16. If the Play Console objects to the aspect ratio, crop rather than scale so the
 # pixels stay sharp:
-#   sips -c 1920 1080 docs/screenshots/NAME.jpg --out play-NAME.jpg
+#   sips -c 1920 1080 store/screenshots/NAME.jpg --out play-NAME.jpg

@@ -13,14 +13,14 @@ If you want to clone the repo, open a terminal and type a git checkout command:
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/01-library.jpg" width="240"/>
-  <img src="docs/screenshots/02-discover.jpg" width="240"/>
-  <img src="docs/screenshots/03-details.jpg" width="240"/>
+  <img src="store/screenshots/01-library.jpg" width="240"/>
+  <img src="store/screenshots/02-discover.jpg" width="240"/>
+  <img src="store/screenshots/03-details.jpg" width="240"/>
 </p>
 <p align="center">
-  <img src="docs/screenshots/04-now-playing.jpg" width="240"/>
-  <img src="docs/screenshots/05-settings.jpg" width="240"/>
-  <img src="docs/screenshots/06-lockscreen.jpg" width="240"/>
+  <img src="store/screenshots/04-now-playing.jpg" width="240"/>
+  <img src="store/screenshots/05-settings.jpg" width="240"/>
+  <img src="store/screenshots/06-lockscreen.jpg" width="240"/>
 </p>
 
 ## Features
@@ -57,14 +57,29 @@ sync/        the periodic episode update worker
 
 Requires Android 7.0 (API 24) or newer.
 
-## Screenshots for the listing
+## Play Store assets
 
-The images above live in `docs/screenshots` and double as the Play Store set. To retake
-one, open that screen on a device and run:
+Everything the listing needs lives in `store/`:
+
+```
+store/short-description.txt   80 character limit
+store/long-description.txt    4000 character limit
+store/feature-graphic.png     1024x500, no alpha
+store/screenshots/            the set above, also used by this readme
+store/photos/                 lossless captures, git ignored
+```
+
+To retake a screenshot, open that screen on a device and run:
 
 ```
 ./scripts/capture_screenshot.sh 01-library
 ./scripts/capture_screenshot.sh --lock 06-lockscreen
+```
+
+To rebuild the feature graphic after the screenshots or brand colour change:
+
+```
+python3 scripts/feature_graphic.py
 ```
 
 ## Building

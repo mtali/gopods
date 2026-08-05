@@ -22,5 +22,6 @@ local.properties
 /keystore/keystore.properties
 /keystore/*.jks
 
-# Lossless screenshot captures; the optimised set in docs/screenshots is tracked
-/screenshots/
+# Lossless captures. The optimised set in store/screenshots is tracked, since the
+# readme renders it and the Play listing uses it.
+/store/photos/
