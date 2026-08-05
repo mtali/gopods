@@ -1,345 +1,286 @@
 package com.colisa.podplay.ui
 
-import android.app.Application
 import androidx.annotation.AnyThread
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
 import com.colisa.podplay.GoConstants
-import com.colisa.podplay.data.ItunesRepo
-import com.colisa.podplay.data.PodcastRepo
-import com.colisa.podplay.data.RealItunesRepo
-import com.colisa.podplay.db.GoDatabase
-import com.colisa.podplay.models.Episode
-import com.colisa.podplay.models.Podcast
-import com.colisa.podplay.network.Resource
-import com.colisa.podplay.network.api.FeedService
-import com.colisa.podplay.network.api.ItunesService
-import com.colisa.podplay.util.DateUtils
+import com.colisa.podplay.core.common.Result
+import com.colisa.podplay.core.common.utils.DateUtils
+import com.colisa.podplay.core.common.utils.HtmlUtils.htmlToText
+import com.colisa.podplay.core.data.repository.ItunesRepository
+import com.colisa.podplay.core.data.repository.PodcastRepository
+import com.colisa.podplay.core.dispatchers.Dispatcher
+import com.colisa.podplay.core.dispatchers.GoDispatchers.Default
+import com.colisa.podplay.core.models.Episode
+import com.colisa.podplay.core.models.Podcast
 import com.colisa.podplay.util.Event
-import com.colisa.podplay.util.HtmlUtils.htmlToSpannable
-import kotlinx.coroutines.Dispatchers
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
-
+import java.util.Date
+import javax.inject.Inject
 
 enum class DisplayState {
-    LIVE,
-    SUBSCRIBED
+  LIVE,
+  SUBSCRIBED
 }
 
-/**
- * This is a main view model for this application
- */
-class GoViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class GoViewModel @Inject constructor(
+  private val itunesRepository: ItunesRepository,
+  private val podcastRepository: PodcastRepository,
+  @param:Dispatcher(Default) private val defaultDispatcher: CoroutineDispatcher,
+) : ViewModel() {
 
-    // Spinner
-    private val _spinner = MutableLiveData<Boolean>()
-    val spinner: LiveData<Boolean> = _spinner
+  private val _spinner = MutableLiveData<Boolean>()
+  val spinner: LiveData<Boolean> = _spinner
 
-    // Configurations
-    private val db = GoDatabase.getInstance(application)
-    private val itunesRepo: ItunesRepo by lazy {
-        RealItunesRepo(
-            ItunesService.instance,
-            db.podcastDao(),
-            db
-        )
+  private val _snackbar = MutableLiveData<Event<String>>()
+  val snackbar: LiveData<Event<String>> = _snackbar
+
+  private val _openPodcastDetails = MutableLiveData<Event<IPodcast>>()
+  val openPodcastDetails: LiveData<Event<IPodcast>> = _openPodcastDetails
+
+  private var query: String? = null
+  private var searchJob: Job? = null
+  private val _searchPodcasts = MutableLiveData<List<IPodcast>>()
+
+  private val _activeIPodcast = MutableLiveData<IPodcast?>()
+  val activeIPodcast: LiveData<IPodcast?> = _activeIPodcast
+
+  private var feedJob: Job? = null
+  private val _rPodcastFeed = MutableLiveData<RPodcast?>()
+  val rPodcastFeed: LiveData<RPodcast?> = _rPodcastFeed
+
+  private val subscribedPodcasts = podcastRepository.getPodcasts(subscribed = true)
+    .map { podcasts -> podcasts.toIPodcasts() }
+
+  private var activePodcast: Podcast? = null
+
+  private val state = MutableStateFlow(DisplayState.SUBSCRIBED)
+
+  val podcasts: LiveData<List<IPodcast>> = state.flatMapLatest { displayState ->
+    if (displayState == DisplayState.LIVE) {
+      _searchPodcasts.asFlow()
+    } else {
+      subscribedPodcasts
     }
-    private val podcastsRepo: PodcastRepo by lazy {
-        PodcastRepo(
-            FeedService.instance,
-            db
-        )
-    }
+  }.asLiveData()
 
-    // Snackbar
-    private val _snackbar = MutableLiveData<Event<String>>()
-    val snackbar: LiveData<Event<String>> = _snackbar
+  private val _playEpisodeEvent = MutableLiveData<Event<REpisode>>()
+  val playEpisodeEvent: LiveData<Event<REpisode>> = _playEpisodeEvent
 
-    // Navigation
-    private val _openPodcastDetails = MutableLiveData<Event<IPodcast>>()
-    val openPodcastDetails: LiveData<Event<IPodcast>> = _openPodcastDetails
+  val noSubscribedPodcasts = podcasts.map { it.isEmpty() }
 
+  private fun showLive() {
+    state.value = DisplayState.LIVE
+  }
 
-    // Search
-    private var query: String? = null
-    private var searchJob: Job? = null
-    private val _searchPodcasts = MutableLiveData<List<IPodcast>>()
+  fun showSubscribed() {
+    state.value = DisplayState.SUBSCRIBED
+  }
 
-    // Current IPodcast
-    private var _activeIPodcast = MutableLiveData<IPodcast?>()
-    var activeIPodcast: LiveData<IPodcast?> = _activeIPodcast
+  private fun spinner(state: Boolean) {
+    _spinner.value = state
+  }
 
-    // Feed
-    private var feedJob: Job? = null
-    private val _rPodcastFeed = MutableLiveData<RPodcast?>()
-    val rPodcastFeed: LiveData<RPodcast?> = _rPodcastFeed
+  private fun message(msg: String?) {
+    _snackbar.value = Event(msg ?: "Unexpected error")
+  }
 
-    // Subscribed podcasts
-    private var _subscribedIPodcast =
-        podcastsRepo.getPodcasts(subscribed = true).map {
-            it.toIPodcasts()
+  fun onSearchPodcast(term: String) {
+    query = term
+    showLive()
+
+    searchJob?.cancel()
+    searchJob = viewModelScope.launch {
+      itunesRepository.searchPodcasts(term).collect { result ->
+        when (result) {
+          is Result.Loading<List<Podcast>> -> {
+            val cached = result.data
+            if (!cached.isNullOrEmpty()) {
+              _searchPodcasts.value = cached.toIPodcasts()
+              spinner(false)
+            } else {
+              spinner(true)
+            }
+          }
+
+          is Result.Error<List<Podcast>> -> {
+            spinner(false)
+            message(result.exception?.message)
+          }
+
+          is Result.Success<List<Podcast>> -> {
+            if (result.data.isEmpty()) {
+              message("Empty response")
+            } else {
+              _searchPodcasts.value = result.data.toIPodcasts()
+            }
+            spinner(false)
+          }
         }
+      }
+    }
+  }
 
-    // Podcast
-    private var activePodcast: Podcast? = null
+  private fun fetchPodcastFeed(url: String, block: suspend (Podcast) -> Unit) {
+    feedJob?.cancel()
+    feedJob = viewModelScope.launch {
+      podcastRepository.getPodcastFeed(url).collect { result ->
+        when (result) {
+          is Result.Loading<Podcast> -> {
+            result.data?.let { block(it) }
+            // Loading is only shown when there is nothing cached to display.
+            spinner(result.data?.episodes.isNullOrEmpty())
+          }
 
-    // Live + Subscribed
-    private val state = MutableStateFlow(DisplayState.SUBSCRIBED)
-    val podcasts: LiveData<List<IPodcast>> = state.flatMapLatest { state ->
-        if (state == DisplayState.LIVE) {
-            _searchPodcasts.asFlow()
-        } else {
-            _subscribedIPodcast
+          is Result.Error<Podcast> -> {
+            spinner(false)
+            message(result.exception?.message)
+          }
+
+          is Result.Success<Podcast> -> {
+            block(result.data)
+            spinner(false)
+          }
         }
-    }.asLiveData()
-
-    // Episode
-    private val _playEpisodeEvent = MutableLiveData<Event<REpisode>>()
-    val playEpisodeEvent: LiveData<Event<REpisode>> = _playEpisodeEvent
-
-    // No subscribed podcast
-    val noSubscribedPodcasts = podcasts.map {
-        it.isNullOrEmpty()
+      }
     }
+  }
 
-
-    private fun showLive() {
-        state.value = DisplayState.LIVE
+  fun onLoadPodcastRssFeed() {
+    val url = _activeIPodcast.value?.feedUrl ?: return
+    fetchPodcastFeed(url) { podcast ->
+      activePodcast = podcast
+      _rPodcastFeed.value = podcast.toRPodcastMainSafe()
     }
+  }
 
-    fun showSubscribed() {
-        state.value = DisplayState.SUBSCRIBED
-    }
-
-    private fun spinner(state: Boolean) {
-        _spinner.value = state
-    }
-
-    private fun message(msg: String?) {
-        _snackbar.value = Event(msg ?: "Unexpected error")
-    }
-
-    fun onSearchPodcast(term: String) {
-        // Prevent user perform same search while work is still on progress
-        // if (term == query && searchJob?.isActive == true) return
-        query = term
-
-        showLive()
-
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            itunesRepo.searchPodcasts(term)
-                .collect { result ->
-                    when (result) {
-                        is Resource.Loading -> {
-                            if (!result.data.isNullOrEmpty()) {
-                                _searchPodcasts.value = result.data.toIPodcasts()
-                                spinner(false)
-                            } else {
-                                spinner(true)
-                            }
-                        }
-
-                        is Resource.Error -> {
-                            spinner(false)
-                            message(result.error?.message)
-                        }
-
-                        is Resource.Success -> {
-                            if (result.data.isNullOrEmpty()) {
-                                message("Empty response")
-                            } else {
-                                _searchPodcasts.value = result.data.toIPodcasts()
-                            }
-                            spinner(false)
-                        }
-                    }
-                }
-
-        }
-    }
-
-    private fun fetchPodcastFeed(url: String, block: suspend (Podcast) -> Unit) {
+  fun onNavigation(from: String) {
+    when (from) {
+      GoConstants.DETAILS_FRAGMENT_TAG -> {
+        spinner(false)
         feedJob?.cancel()
-        feedJob = viewModelScope.launch {
-            podcastsRepo.getPodcastFeed(url)
-                .collect { result ->
-                    when (result) {
-                        is Resource.Loading -> {
-                            result.data?.let { podcast ->
-                                block(podcast)
-                                spinner
-                            }
-                            // If there are episodes we don't show loading
-                            spinner(result.data?.episodes.isNullOrEmpty())
-                        }
+      }
 
-                        is Resource.Error<Podcast> -> {
-                            spinner(false)
-                            message(result.error?.message)
-                        }
-
-                        is Resource.Success<Podcast> -> {
-                            val podcast = result.data
-                            podcast?.let {
-                                block(it)
-                            }
-                            spinner(false)
-                        }
-                    }
-                }
-        }
+      else -> throw IllegalStateException("Unknown back navigation tag: '$from'")
     }
+  }
 
-    fun onLoadPodcastRssFeed() {
-        val url = _activeIPodcast.value?.feedUrl ?: return
-
-        fetchPodcastFeed(url) {
-            activePodcast = it
-            _rPodcastFeed.value = it.toRPodcastMainSafe()
-        }
+  fun setActivePodcast(feedUrl: String) {
+    fetchPodcastFeed(url = feedUrl) { podcast ->
+      openPodcastDetail(podcast.toIPodcast())
     }
+  }
 
-    fun onNavigation(from: String) {
-        when (from) {
-            GoConstants.DETAILS_FRAGMENT_TAG -> {
-                spinner(false)
-                feedJob?.cancel()
-                // TODO: Clean other variables
-            }
-            else -> {
-                throw IllegalStateException("Unknown back navigation tag: '${from}'")
-            }
-        }
+  fun subscribeActivePodcast() {
+    viewModelScope.launch {
+      activePodcast?.let { podcastRepository.subscribePodcast(it, true) }
     }
+  }
 
-    fun setActivePodcast(feedUrl: String) {
-        fetchPodcastFeed(url = feedUrl) { podcast ->
-            openPodcastDetail(podcast.toIPodcast())
-        }
+  fun unsubscribeActivePodcast() {
+    viewModelScope.launch {
+      activePodcast?.let { podcastRepository.subscribePodcast(it, false) }
     }
+  }
 
-    fun subscribeActivePodcast() {
-        viewModelScope.launch {
-            activePodcast?.let { podcast ->
-                podcastsRepo.subscribePodcast(podcast, true)
-            }
-        }
-    }
+  @AnyThread
+  private suspend fun Podcast.toRPodcastMainSafe() = withContext(defaultDispatcher) {
+    toRPodcast()
+  }
 
-    fun unsubscribeActivePodcast() {
-        viewModelScope.launch {
-            activePodcast?.let { podcast ->
-                podcastsRepo.subscribePodcast(podcast, false)
-            }
-        }
-    }
+  private fun Podcast.toRPodcast(): RPodcast = RPodcast(
+    subscribed = subscribed,
+    feedTitle = htmlToText(feedTitle),
+    feedUrl = feedUrl,
+    feedDesc = htmlToText(feedDescription),
+    imageUrl = imageUrl,
+    imageUrl600 = imageUrl600,
+    episodes = episodes.toREpisodes(),
+  )
 
+  @AnyThread
+  private suspend fun List<Podcast>.toIPodcasts(): List<IPodcast> =
+    withContext(defaultDispatcher) { map { it.toIPodcast() } }
 
-    @AnyThread
-    suspend fun Podcast.toRPodcastMainSafe() = withContext(Dispatchers.Default) {
-        toRPodcast()
-    }
+  private fun Podcast.toIPodcast(): IPodcast = IPodcast(
+    name = feedTitle,
+    lastUpdated = DateUtils.dateToShortDate(lastUpdated),
+    imageUrl = imageUrl,
+    imageUrl600 = imageUrl600,
+    feedUrl = feedUrl,
+  )
 
-    private fun Podcast.toRPodcast(): RPodcast {
-        return RPodcast(
-            subscribed = subscribed,
-            feedTitle = htmlToSpannable(feedTitle).toString(),
-            feedUrl = feedUrl,
-            feedDesc = htmlToSpannable(feedDescription).toString(),
-            imageUrl = imageUrl,
-            imageUrl600 = imageUrl600,
-            episodes = episodes.toREpisodes()
-        )
-    }
-
-    @AnyThread
-    private suspend fun List<Podcast>.toIPodcasts(): List<IPodcast> = withContext(Dispatchers.IO) {
-        map { it.toIPodcast() }
-    }
-
-    private fun Podcast.toIPodcast(): IPodcast {
-        return IPodcast(
-            name = feedTitle,
-            lastUpdated = DateUtils.dateToShortDate(lastUpdated),
-            imageUrl = imageUrl,
-            imageUrl600 = imageUrl600,
-            feedUrl = feedUrl
-        )
-    }
-
-    private fun List<Episode>.toREpisodes(): List<REpisode> {
-        return map {
-            REpisode(
-                it.guid,
-                htmlToSpannable(it.title).toString(),
-                htmlToSpannable(it.description).toString(),
-                it.mediaUrl,
-                it.releaseDate,
-                it.duration
-            )
-        }
-    }
-
-
-    fun refreshPodcasts() {
-        _spinner.value = false
-    }
-
-    fun refreshPodcastDetails() {
-        _spinner.value = false
-    }
-
-    fun playEpisode(episode: REpisode) {
-        _playEpisodeEvent.value = Event(episode)
-    }
-
-    /*
-        Called when podcast item is clicked
-        via binding
-     */
-    fun openPodcastDetail(podcast: IPodcast) {
-        if (podcast.feedUrl == null) {
-            _snackbar.value = Event("Podcast link broken")
-        } else {
-            _rPodcastFeed.value = null
-            _activeIPodcast.value = podcast
-            _openPodcastDetails.value = Event(podcast)
-
-        }
-    }
-
-    data class IPodcast(
-        var name: String? = "",
-        var lastUpdated: String? = "",
-        var imageUrl: String? = "",
-        var imageUrl600: String? = "",
-        var feedUrl: String? = ""
+  private fun List<Episode>.toREpisodes(): List<REpisode> = map {
+    REpisode(
+      guid = it.guid,
+      title = htmlToText(it.title),
+      description = htmlToText(it.description),
+      mediaUrl = it.mediaUrl,
+      releaseDate = it.releaseDate,
+      duration = it.duration,
     )
+  }
 
-    data class RPodcast(
-        var subscribed: Boolean = false,
-        var feedTitle: String? = "",
-        var feedUrl: String? = "",
-        var feedDesc: String? = "",
-        var imageUrl: String? = "",
-        var imageUrl600: String? = "",
-        var episodes: List<REpisode>
-    )
+  fun refreshPodcasts() {
+    _spinner.value = false
+  }
 
-    data class REpisode(
-        var guid: String? = "",
-        var title: String? = "",
-        var description: String? = "",
-        var mediaUrl: String? = "",
-        var releaseDate: Date? = null,
-        var duration: String? = ""
-    )
+  fun refreshPodcastDetails() {
+    _spinner.value = false
+  }
 
+  fun playEpisode(episode: REpisode) {
+    _playEpisodeEvent.value = Event(episode)
+  }
+
+  /** Called when a podcast row is tapped, via data binding. */
+  fun openPodcastDetail(podcast: IPodcast) {
+    if (podcast.feedUrl == null) {
+      _snackbar.value = Event("Podcast link broken")
+    } else {
+      _rPodcastFeed.value = null
+      _activeIPodcast.value = podcast
+      _openPodcastDetails.value = Event(podcast)
+    }
+  }
+
+  data class IPodcast(
+    var name: String? = "",
+    var lastUpdated: String? = "",
+    var imageUrl: String? = "",
+    var imageUrl600: String? = "",
+    var feedUrl: String? = "",
+  )
+
+  data class RPodcast(
+    var subscribed: Boolean = false,
+    var feedTitle: String? = "",
+    var feedUrl: String? = "",
+    var feedDesc: String? = "",
+    var imageUrl: String? = "",
+    var imageUrl600: String? = "",
+    var episodes: List<REpisode>,
+  )
+
+  data class REpisode(
+    var guid: String? = "",
+    var title: String? = "",
+    var description: String? = "",
+    var mediaUrl: String? = "",
+    var releaseDate: Date? = null,
+    var duration: String? = "",
+  )
 }

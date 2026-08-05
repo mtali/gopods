@@ -5,7 +5,7 @@
 
     <data>
 
-        <import type="com.colisa.podplay.util.DateUtils" />
+        <import type="com.colisa.podplay.core.common.utils.DateUtils" />
 
         <variable
             name="goViewModel"

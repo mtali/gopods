@@ -1,6 +1,7 @@
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.kotlin.serialization)
   // DataBinding needs kapt to pick up the @BindingAdapter functions. Both go away
   // when the Compose UI replaces the layouts. Version comes from the Kotlin plugin
   // already on the classpath.
@@ -83,7 +84,9 @@ dependencies {
   implementation(libs.google.material)
 
   // Dependency injection
+  implementation(libs.androidx.hilt.work)
   implementation(libs.hilt.android)
+  ksp(libs.androidx.hilt.compiler)
   ksp(libs.hilt.compiler)
 
   // Persistence
@@ -106,10 +109,11 @@ dependencies {
   implementation(libs.support.media.compat)
 
   // Networking
+  implementation(libs.kotlinx.serialization.json)
   implementation(libs.okhttp)
   implementation(libs.okhttp.logging.interceptor)
   implementation(libs.retrofit)
-  implementation(libs.retrofit.converter.gson)
+  implementation(libs.retrofit.serialization.converter)
   implementation(libs.rssparser)
 
   // Serialization

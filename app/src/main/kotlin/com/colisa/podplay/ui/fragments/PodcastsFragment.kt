@@ -13,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.colisa.podplay.R
+import dagger.hilt.android.AndroidEntryPoint
 import com.colisa.podplay.databinding.FragmentPodcastsBinding
 import com.colisa.podplay.extensions.hideKeyboard
 import com.colisa.podplay.ui.GoViewModel
@@ -22,6 +23,7 @@ import com.colisa.podplay.util.DialogUtils
 import com.colisa.podplay.util.EventObserver
 import timber.log.Timber
 
+@AndroidEntryPoint
 class PodcastsFragment : Fragment(R.layout.fragment_podcasts), SearchView.OnQueryTextListener {
 
     private var binding: FragmentPodcastsBinding? = null

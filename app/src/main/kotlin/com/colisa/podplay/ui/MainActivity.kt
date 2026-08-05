@@ -47,17 +47,18 @@ import com.colisa.podplay.extensions.isPrepared
 import com.colisa.podplay.extensions.onMediaController
 import com.colisa.podplay.extensions.setupMessagingToast
 import com.colisa.podplay.extensions.stateName
-import com.colisa.podplay.goPreferences
+import com.colisa.podplay.app.goPreferences
 import com.colisa.podplay.player.GoPlayerService
 import com.colisa.podplay.ui.fragments.OnPodcastDetailsListener
 import com.colisa.podplay.util.EventObserver
 import com.colisa.podplay.util.ThemeUtils
 import com.colisa.podplay.util.VersionUtils
-import com.colisa.podplay.workers.EpisodeUpdateWorker
+import com.colisa.podplay.sync.EpisodeUpdateWorker
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
+import dagger.hilt.android.AndroidEntryPoint
 import de.halfbit.edgetoedge.Edge
 import de.halfbit.edgetoedge.edgeToEdge
 import kotlinx.coroutines.delay
@@ -65,6 +66,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity(), OnPodcastDetailsListener, UIControlInterface {
 
     // Binding classed

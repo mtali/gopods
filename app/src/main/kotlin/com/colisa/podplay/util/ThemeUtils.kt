@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import com.colisa.podplay.R
-import com.colisa.podplay.goPreferences
+import com.colisa.podplay.app.goPreferences
 
 object ThemeUtils {
     @JvmStatic

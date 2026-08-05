@@ -12,12 +12,14 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.colisa.podplay.GoConstants
 import com.colisa.podplay.R
+import dagger.hilt.android.AndroidEntryPoint
 import com.colisa.podplay.databinding.FragmentPodcastDetailsBinding
 import com.colisa.podplay.ui.GoViewModel
 import com.colisa.podplay.ui.adapters.EpisodeListAdapter
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@AndroidEntryPoint
 class PodcastDetailsFragment : Fragment() {
     private var binding: FragmentPodcastDetailsBinding? = null
     private val goViewModel: GoViewModel by activityViewModels()
