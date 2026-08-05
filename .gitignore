@@ -1,22 +1,18 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/misc.xml
-/.idea/assetWizardSettings.xml
-/.idea/codeStyles/
-/.idea/vcs.xml
-/.idea/
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# IDE. The whole directory goes; the per file rules it replaces were listing a
+# handful of files inside a directory that was already ignored below them.
+.idea/
+
+# Kotlin build session data, created at the project root by the compiler
+.kotlin/
 
 # Release signing
 /keystore/keystore.properties
