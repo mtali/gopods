@@ -1,0 +1,6 @@
+Version 2.0.1 fixes subscribing.
+
+• Subscribing now sticks, and searching again no longer clears your library
+• Your shows keep their episode lists
+
+No account, no ads, no tracking.

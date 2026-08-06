@@ -30,8 +30,8 @@ android {
     applicationId = "com.colisa.podplay"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "2.0"
+    versionCode = 5
+    versionName = "2.0.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
