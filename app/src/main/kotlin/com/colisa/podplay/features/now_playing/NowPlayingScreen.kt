@@ -1,6 +1,7 @@
 package com.colisa.podplay.features.now_playing
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,12 +53,14 @@ import com.colisa.podplay.core.ui.components.PodcastArtwork
 @Composable
 fun NowPlayingRoute(
   onBackClick: () -> Unit,
+  onPodcastClick: (String) -> Unit,
   viewModel: NowPlayingViewModel = hiltViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   NowPlayingScreen(
     uiState = uiState,
     onBackClick = onBackClick,
+    onPodcastClick = onPodcastClick,
     onPlayPause = viewModel::onPlayPause,
     onSeekBack = viewModel::onSeekBack,
     onSeekForward = viewModel::onSeekForward,
@@ -71,6 +74,7 @@ fun NowPlayingRoute(
 fun NowPlayingScreen(
   uiState: PlayerUiState,
   onBackClick: () -> Unit,
+  onPodcastClick: (String) -> Unit,
   onPlayPause: () -> Unit,
   onSeekBack: () -> Unit,
   onSeekForward: () -> Unit,
@@ -82,8 +86,7 @@ fun NowPlayingScreen(
       TopAppBar(
         title = {
           Text(
-            text = uiState.episode?.podcastTitle.orEmpty(),
-            style = MaterialTheme.typography.titleSmall,
+            text = stringResource(R.string.now_playing),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
@@ -111,7 +114,18 @@ fun NowPlayingScreen(
     ) {
       Spacer(Modifier.height(16.dp))
 
-      Surface(shape = MaterialTheme.shapes.large, shadowElevation = 12.dp) {
+      val podcastTitle = episode?.podcastTitle.orEmpty()
+      val feedUrl = episode?.feedUrl.orEmpty()
+      // Artwork and title open the podcast too, not just the name below them.
+      val openPodcast = Modifier.clickable(enabled = feedUrl.isNotBlank()) {
+        onPodcastClick(feedUrl)
+      }
+
+      Surface(
+        shape = MaterialTheme.shapes.large,
+        shadowElevation = 12.dp,
+        modifier = openPodcast,
+      ) {
         PodcastArtwork(
           imageUrl = episode?.artUrl600?.ifBlank { episode.artUrl },
           thumbnailUrl = episode?.artUrl,
@@ -123,11 +137,37 @@ fun NowPlayingScreen(
 
       Text(
         text = episode?.title.orEmpty(),
-        style = MaterialTheme.typography.titleLarge,
+        style = MaterialTheme.typography.headlineSmall,
         textAlign = TextAlign.Center,
         maxLines = 3,
         overflow = TextOverflow.Ellipsis,
+        modifier = openPodcast,
       )
+
+      if (podcastTitle.isNotBlank()) {
+        // An episode stored before the feed url was tracked has nowhere to go.
+        if (feedUrl.isBlank()) {
+          Spacer(Modifier.height(8.dp))
+          Text(
+            text = podcastTitle,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+        } else {
+          TextButton(onClick = { onPodcastClick(feedUrl) }) {
+            Text(
+              text = podcastTitle,
+              style = MaterialTheme.typography.titleSmall,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+            )
+          }
+        }
+      }
+
       if (uiState.isBuffering) {
         Spacer(Modifier.height(8.dp))
         Text(
