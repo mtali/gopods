@@ -1,0 +1,6 @@
+Version 2.0.2 connects the player back to the show.
+
+• Tap the artwork, the episode title or the show name to open the podcast
+• Episode titles in the player are larger and easier to read
+
+No account, no ads, no tracking.
