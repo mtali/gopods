@@ -17,4 +17,5 @@ data class NowPlayingEpisode(
   val mediaUrl: String = "",
   val description: String = "",
   val podcastTitle: String = "",
+  val feedUrl: String = "",
 )

@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.colisa.podplay.core.navigation.Navigator
 import com.colisa.podplay.features.now_playing.NowPlayingRoute
+import com.colisa.podplay.features.podcast_details.navigation.navigateToPodcastDetails
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -16,6 +17,7 @@ fun EntryProviderScope<NavKey>.nowPlayingEntry(navigator: Navigator) {
   entry<NowPlayingNavKey> {
     NowPlayingRoute(
       onBackClick = navigator::goBack,
+      onPodcastClick = { feedUrl -> navigator.navigateToPodcastDetails(feedUrl) },
       viewModel = hiltViewModel(),
     )
   }

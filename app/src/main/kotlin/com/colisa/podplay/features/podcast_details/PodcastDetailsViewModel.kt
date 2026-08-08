@@ -147,6 +147,7 @@ class PodcastDetailsViewModel @AssistedInject constructor(
         mediaUrl = episode.mediaUrl,
         description = episode.description,
         podcastTitle = podcast.title,
+        feedUrl = podcast.feedUrl,
       )
     )
   }
